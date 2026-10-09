@@ -1,7 +1,12 @@
+from importlib.metadata import PackageNotFoundError, version
+
 from plotly_print.core import to_image, to_svg, write_image
 from plotly_print.plotly_hook import patch_plotly, register, unpatch_plotly, unregister
 
-__version__ = '0.1.0'
+try:
+    __version__ = version('plotly-print')
+except PackageNotFoundError:
+    __version__ = '0.1.0'
 
 __all__ = [
     'to_svg',

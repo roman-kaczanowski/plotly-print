@@ -43,11 +43,18 @@ packages = ["src/plotly_print"]
 [tool.uv]
 default-groups = ["dev", "test"]
 
-
 [dependency-groups]
-dev = ["ruff", "ipython", "pre-commit", "poethepoet", "mdformat", "mdformat-gfm", "mdformat-tables"]
-test = ["pytest", "numpy>=1.24.0", "pandas>=2.0.0"]
-benchmark = ["kaleido>=0.2.1"]
+dev = ["ipython", "pre-commit", "poethepoet"]
+test = [
+    "pytest",
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "kaleido>=0.2.1",
+    "ruff",
+    "mdformat",
+    "mdformat-gfm",
+    "mdformat-tables",
+]
 
 [tool.ruff]
 target-version = "py312"
@@ -74,7 +81,7 @@ quote-style = "single"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 
 [tool.poe]
 executor = { type = "uv" }
@@ -82,9 +89,7 @@ shell_interpreter = "bash"
 
 [tool.poe.tasks]
 lock = "uv lock"
-
-install = "uv sync"
-
+install = "uv sync --all-groups"
 hooks = "pre-commit install"
 update = "uv lock --upgrade"
 upgrade.sequence = ["update", "install"]

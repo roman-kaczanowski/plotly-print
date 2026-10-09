@@ -4,15 +4,14 @@ import argparse
 import importlib.util
 import statistics
 import time
-from io import BytesIO
 from pathlib import Path
 
 import plotly.graph_objects as go
-from PIL import Image, ImageChops
 
 import plotly_print
 from benchmark.cases import CHARTS
 from benchmark.collage import build_side_by_side
+from benchmark.compare import pixel_diff_max
 from benchmark.report import write_report
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -35,15 +34,6 @@ def _kaleido_available() -> bool:
     return importlib.util.find_spec('kaleido') is not None
 
 
-def _pixel_diff_max(print_bytes: bytes, kaleido_bytes: bytes) -> float | None:
-    img_a = Image.open(BytesIO(print_bytes)).convert('RGB')
-    img_b = Image.open(BytesIO(kaleido_bytes)).convert('RGB')
-    if img_a.size != img_b.size:
-        return None
-    diff = ImageChops.difference(img_a, img_b)
-    return float(max(channel[1] for channel in diff.getextrema()))
-
-
 def _benchmark_png(render_fn, fig: go.Figure, rounds: int) -> tuple[bytes, float]:
     times: list[float] = []
     png: bytes = b''
@@ -56,7 +46,7 @@ def _benchmark_png(render_fn, fig: go.Figure, rounds: int) -> tuple[bytes, float
 
 def run_benchmark(*, output_dir: Path, quick: bool, rounds: int) -> int:
     if not _kaleido_available():
-        print('kaleido is not installed. Sync the benchmark group: uv sync --group benchmark')
+        print('kaleido is not installed. Run: poe install')
         return 1
 
     import kaleido  # noqa: F401
@@ -84,7 +74,7 @@ def run_benchmark(*, output_dir: Path, quick: bool, rounds: int) -> int:
         png_kaleido, avg_kaleido = _benchmark_png(lambda f: f.to_image(format='png'), fig, rounds)
 
         speedup = avg_kaleido / avg_print if avg_print > 0 else 0.0
-        px_max = _pixel_diff_max(png_print, png_kaleido)
+        px_max = pixel_diff_max(png_print, png_kaleido)
         px_label = f'{px_max:.0f}' if px_max is not None else 'size mismatch'
 
         print(

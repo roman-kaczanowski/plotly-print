@@ -546,22 +546,20 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
-benchmark = [
-    { name = "kaleido" },
-]
 dev = [
     { name = "ipython" },
+    { name = "poethepoet" },
+    { name = "pre-commit" },
+]
+test = [
+    { name = "kaleido" },
     { name = "mdformat" },
     { name = "mdformat-gfm" },
     { name = "mdformat-tables" },
-    { name = "poethepoet" },
-    { name = "pre-commit" },
-    { name = "ruff" },
-]
-test = [
     { name = "numpy" },
     { name = "pandas" },
     { name = "pytest" },
+    { name = "ruff" },
 ]
 
 [package.metadata]
@@ -573,20 +571,20 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-benchmark = [{ name = "kaleido", specifier = ">=0.2.1" }]
 dev = [
     { name = "ipython" },
+    { name = "poethepoet" },
+    { name = "pre-commit" },
+]
+test = [
+    { name = "kaleido", specifier = ">=0.2.1" },
     { name = "mdformat" },
     { name = "mdformat-gfm" },
     { name = "mdformat-tables" },
-    { name = "poethepoet" },
-    { name = "pre-commit" },
-    { name = "ruff" },
-]
-test = [
     { name = "numpy", specifier = ">=1.24.0" },
     { name = "pandas", specifier = ">=2.0.0" },
     { name = "pytest" },
+    { name = "ruff" },
 ]
 
 [[package]]
