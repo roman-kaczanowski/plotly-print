@@ -1,0 +1,15 @@
+---
+description: Gitignored local output directory for agents
+alwaysApply: true
+---
+
+# `.artifacts/`
+
+The repo root `.artifacts/` directory is **gitignored**. Use it for:
+
+- Benchmark output (`poe benchmark` writes to `.artifacts/benchmark/`)
+- LLM research notes, comparison reports, scratch exports, and other **temporary local artifacts**
+
+Do not commit files under `.artifacts/`. Nothing there is shipped on PyPI or in the wheel.
+
+When generating reports or large binary outputs for the user to review, prefer paths under `.artifacts/` unless they ask for another location.

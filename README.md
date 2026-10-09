@@ -4,6 +4,8 @@
 
 Lightweight, browser-less static image exporter for Plotly. No Chrome, Chromium, or Playwright. Figures are rendered with an embedded QuickJS runtime, Pillow font metrics, and `resvg-py` for raster output.
 
+Works offline: an official plotly.js cartesian partial is bundled (see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
+
 ## Install
 
 ```bash

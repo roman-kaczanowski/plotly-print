@@ -11,3 +11,4 @@ This project was generated from **cookiecutter-python-seed**.
 
 - Always-on: `.cursor/rules/global.mdc`
 - Markdown (`.md` files): `.cursor/rules/markdown.mdc`
+- Local scratch output: `.cursor/rules/artifacts.mdc`

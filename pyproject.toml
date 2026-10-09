@@ -38,6 +38,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/plotly_print"]
+# benchmark/ is dev-only and intentionally omitted from the wheel.
 
 [tool.uv]
 default-groups = ["dev", "test"]
@@ -46,11 +47,12 @@ default-groups = ["dev", "test"]
 [dependency-groups]
 dev = ["ruff", "ipython", "pre-commit", "poethepoet", "mdformat", "mdformat-gfm", "mdformat-tables"]
 test = ["pytest", "numpy>=1.24.0", "pandas>=2.0.0"]
+benchmark = ["kaleido>=0.2.1"]
 
 [tool.ruff]
 target-version = "py312"
 line-length = 120
-src = ["src"]
+src = ["src", "benchmark"]
 
 [tool.ruff.lint]
 select = [
@@ -89,6 +91,8 @@ upgrade.sequence = ["update", "install"]
 format = [{ cmd = "ruff format ." }, { cmd = "ruff check . --fix" }]
 check = [{ cmd = "ruff format . --check" }, { cmd = "ruff check ." }]
 test = "pytest"
+benchmark = "python -m benchmark"
+benchmark_quick = "python -m benchmark --quick"
 format_docs = { shell = "git ls-files '*.md' | xargs mdformat" }
 check_docs = { shell = "git ls-files '*.md' | xargs mdformat --check" }
 patch = "uv version --bump patch"

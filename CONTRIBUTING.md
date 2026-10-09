@@ -20,6 +20,19 @@ poe test
 
 `poe format` and `poe format_docs` apply the same tools in write mode.
 
+## Kaleido visual benchmark (optional)
+
+Compare plotly-print output to Kaleido side by side (not part of the PyPI wheel):
+
+```shell
+uv sync --group benchmark
+poe benchmark_quick
+```
+
+Full gallery (all chart fixtures): `poe benchmark`.
+
+Outputs are written to `.artifacts/benchmark/` (`report.md`, PNGs, `benchmark_summary.json`).
+
 ## Release
 
 Bump the version in the PR with `poe patch`, `poe minor`, or `poe major`. CI fails if `[project].version` is not higher than on `main`.
