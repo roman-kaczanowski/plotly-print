@@ -1,24 +1,22 @@
 # Third-party notices
 
-This package redistributes the following third-party software.
-
 ## plotly.js
 
-Files under `src/plotly_print/js/`:
+File: `src/plotly_print/js/plotly-cartesian.min.js`
 
-- `plotly_basic.js` - plotly.js (basic, minified) v2.35.2
-- `plotly_comprehensive_2d.js` - redistributed plotly.js build used for 2D static rendering
+Official plotly.js **cartesian** partial (minified) v4.1.1, redistributed for offline /
+isolated environments. The full `plotly.min.js` shipped with the `plotly` Python package
+does not load in the embedded QuickJS runtime, so this smaller official partial is bundled
+instead.
 
-Copyright 2012-2024, Plotly, Inc.
+Copyright 2012-2026, Plotly, Inc.
 All rights reserved.
 Licensed under the MIT license.
-
-The basic bundle header refers to `plotly-basic.min.js.LICENSE.txt`. That companion file was not shipped with the upstream Mirage sources this project was derived from. The MIT terms for plotly.js apply as published by Plotly, Inc.:
 
 ```text
 The MIT License (MIT)
 
-Copyright (c) 2014-2024 Plotly, Inc
+Copyright (c) 2014-2026 Plotly, Inc
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -39,4 +37,4 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-Upstream project: https://github.com/plotly/plotly.js
+Upstream: https://github.com/plotly/plotly.js

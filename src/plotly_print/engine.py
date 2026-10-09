@@ -16,16 +16,8 @@ from plotly_print.fonts import get_default_font_manager
 
 _JS_DIR = Path(__file__).resolve().parent / 'js'
 _MICRO_DOM_PATH = _JS_DIR / 'micro_dom.js'
-_PLOTLY_COMPREHENSIVE_PATH = _JS_DIR / 'plotly_comprehensive_2d.js'
-_PLOTLY_CARTESIAN_PATH = _JS_DIR / 'plotly_cartesian.js'
-_PLOTLY_BASIC_PATH = _JS_DIR / 'plotly_basic.js'
-
-if _PLOTLY_COMPREHENSIVE_PATH.exists():
-    _BUNDLE_PATH = _PLOTLY_COMPREHENSIVE_PATH
-elif _PLOTLY_CARTESIAN_PATH.exists():
-    _BUNDLE_PATH = _PLOTLY_CARTESIAN_PATH
-else:
-    _BUNDLE_PATH = _PLOTLY_BASIC_PATH
+# Official cartesian partial: full plotly.min.js from the plotly package does not load in QuickJS.
+_PLOTLY_JS_PATH = _JS_DIR / 'plotly-cartesian.min.js'
 
 _ENGINE_THREAD_LOCAL = threading.local()
 
@@ -86,8 +78,11 @@ class PrintEngine:
         self.context.add_callable('_measureTextRaw', self.font_manager.measure_raw)
         self.context.add_callable('_encodeCanvasToPNG', _encode_canvas_to_png)
 
+        if not _PLOTLY_JS_PATH.is_file():
+            raise FileNotFoundError(f'plotly.js bundle not found at {_PLOTLY_JS_PATH}')
+
         self.context.eval(_MICRO_DOM_PATH.read_text(encoding='utf-8'))
-        self.context.eval(_BUNDLE_PATH.read_text(encoding='utf-8'))
+        self.context.eval(_PLOTLY_JS_PATH.read_text(encoding='utf-8'))
 
         self.context.eval("""
         function plotlyPrintRender(dataJson, layoutJson) {
