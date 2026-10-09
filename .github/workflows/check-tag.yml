@@ -1,0 +1,50 @@
+name: "Check Tag"
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Version tag like v1.2.3
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  check-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          fetch-tags: true
+          fetch-depth: 0
+
+      - name: Check that tag is on main
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          git fetch origin refs/heads/main:refs/remotes/origin/main --force
+          if ! git merge-base --is-ancestor HEAD refs/remotes/origin/main; then
+            echo "tag $TAG is not on main"
+            exit 1
+          fi
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: '3.12'
+          enable-cache: false
+
+      - name: Ensure tag matches version in pyproject.toml
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          version=$(uv version --short)
+          tag_version="${TAG#v}"
+          if [ "$version" != "$tag_version" ]; then
+            echo "version in pyproject.toml ($version) does not match tag ($TAG)"
+            exit 1
+          fi

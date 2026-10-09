@@ -1,0 +1,143 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from PIL import ImageFont
+
+CANDIDATE_FONTS = [
+    '/System/Library/Fonts/Supplemental/Arial.ttf',
+    '/System/Library/Fonts/Helvetica.ttc',
+    '/Library/Fonts/Arial.ttf',
+    '/System/Library/Fonts/SFNSText.ttf',
+    '/System/Library/Fonts/Supplemental/Verdana.ttf',
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+    '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+    '/usr/share/fonts/truetype/freefont/FreeSans.ttf',
+    'C:\\Windows\\Fonts\\arial.ttf',
+    'C:\\Windows\\Fonts\\segoeui.ttf',
+]
+
+
+class FontManager:
+    def __init__(self) -> None:
+        self._font_cache: dict[tuple[str, int, str], ImageFont.FreeTypeFont | ImageFont.ImageFont] = {}
+        self._measurement_cache: dict[tuple[str, str, int, str], tuple[float, float, float, float]] = {}
+        self._default_system_font_path = self._find_first_available_font()
+
+    def _find_first_available_font(self) -> str | None:
+        for path in CANDIDATE_FONTS:
+            if Path(path).exists():
+                return path
+        return None
+
+    def get_font(self, family: str, size: float, weight: str = '') -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+        int_size = max(1, round(size))
+        cache_key = (family.lower().strip(), int_size, weight.lower().strip())
+        if cache_key in self._font_cache:
+            return self._font_cache[cache_key]
+
+        font = None
+        names = [r.strip().strip('"\'').lower() for r in family.split(',')]
+        # Prefer Arial/Helvetica when Plotly's default stack lists verdana with sans-serif.
+        if 'verdana' in names and ('arial' in names or 'sans-serif' in names or 'open sans' in names):
+            names.remove('verdana')
+            names.append('verdana')
+
+        for clean_name in names:
+            if not clean_name or clean_name in ('sans-serif', 'serif', 'monospace'):
+                continue
+
+            for test_name in (clean_name.title(), clean_name.capitalize(), clean_name):
+                try:
+                    font = ImageFont.truetype(test_name, size=int_size)
+                    if font:
+                        break
+                except Exception:
+                    pass
+            if font:
+                break
+
+            for font_path in CANDIDATE_FONTS:
+                base = Path(font_path).name.lower()
+                if base.startswith(clean_name) and Path(font_path).exists():
+                    try:
+                        font = ImageFont.truetype(font_path, size=int_size)
+                        if font:
+                            break
+                    except Exception:
+                        pass
+            if font:
+                break
+
+        if font is None and self._default_system_font_path:
+            try:
+                font = ImageFont.truetype(self._default_system_font_path, size=int_size)
+            except Exception:
+                pass
+
+        if font is None:
+            try:
+                font = ImageFont.load_default(size=int_size)
+            except TypeError:
+                font = ImageFont.load_default()
+
+        self._font_cache[cache_key] = font
+        return font
+
+    def measure(self, text: str, family: str, size: float, weight: str = '') -> tuple[float, float, float, float]:
+        int_size = max(1, round(size))
+        cache_key = (text, family.lower().strip(), int_size, weight.lower().strip())
+        if cache_key in self._measurement_cache:
+            return self._measurement_cache[cache_key]
+
+        if not text:
+            res = (0.0, float(int_size), float(int_size), 0.0)
+            self._measurement_cache[cache_key] = res
+            return res
+
+        font = self.get_font(family, size, weight)
+        try:
+            length = float(font.getlength(text))
+        except Exception:
+            length = float(len(text) * int_size * 0.6)
+
+        try:
+            bbox = font.getbbox(text)
+            try:
+                metrics = font.getmetrics()
+                ascent_val = float(metrics[0])
+                descent_val = float(metrics[1])
+                h = max(ascent_val + descent_val, float(int_size * 1.2))
+                ascent = ascent_val if ascent_val > 0 else float(int_size * 0.8)
+                descent = descent_val if descent_val > 0 else float(int_size * 0.2)
+            except Exception:
+                h = float(int_size * 1.2)
+                ascent = float(int_size * 0.8)
+                descent = float(int_size * 0.2)
+
+            if bbox:
+                w = max(length, float(bbox[2] - bbox[0]))
+            else:
+                w = length
+        except Exception:
+            w, h = length, float(int_size * 1.2)
+            ascent, descent = float(int_size * 0.8), float(int_size * 0.2)
+
+        res = (round(w, 2), round(h, 2), round(ascent, 2), round(descent, 2))
+        self._measurement_cache[cache_key] = res
+        return res
+
+    def measure_raw(self, text: str, family: str, size_str: str, weight: str = '') -> str:
+        try:
+            size = float(size_str)
+        except (ValueError, TypeError):
+            size = 12.0
+        w, h, a, d = self.measure(text, family, size, weight)
+        return f'{w},{h},{a},{d}'
+
+
+_DEFAULT_FONT_MANAGER = FontManager()
+
+
+def get_default_font_manager() -> FontManager:
+    return _DEFAULT_FONT_MANAGER

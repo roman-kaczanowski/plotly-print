@@ -1,0 +1,61 @@
+name: "Version Check"
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  version-check:
+    runs-on: ubuntu-latest
+    name: Ensure version bumped
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: '3.12'
+          enable-cache: false
+
+      - name: Determine PR version
+        id: get-pr-version
+        run: echo "version=$(uv version --short)" >> "$GITHUB_OUTPUT"
+
+      - name: Determine main version
+        id: get-main-version
+        run: |
+          git fetch origin refs/heads/main:refs/remotes/origin/main --depth=1
+          git checkout -B main origin/main
+          main_version=$(uv version --short)
+          echo "Main version: $main_version"
+          echo "version=$main_version" >> "$GITHUB_OUTPUT"
+
+      - name: Compare versions
+        run: |
+          pr_version="${{ steps.get-pr-version.outputs.version }}"
+          main_version="${{ steps.get-main-version.outputs.version }}"
+
+          if [ -z "$pr_version" ] || [ -z "$main_version" ]; then
+            echo "Version is not set"
+            exit 1
+          fi
+
+          if [ "$pr_version" = "$main_version" ]; then
+            echo "Version unchanged ($pr_version). Please bump the version (e.g. poe patch)"
+            exit 1
+          fi
+
+          highest_version=$(echo -e "$pr_version\n$main_version" | sort -V | tail -n1)
+          if [ "$highest_version" != "$pr_version" ]; then
+            echo "Version $highest_version is higher than PR version $pr_version. Please bump the version (e.g. poe patch)"
+            exit 1
+          fi
+
+          echo "Version $pr_version is valid"

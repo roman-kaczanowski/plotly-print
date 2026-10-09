@@ -1,0 +1,63 @@
+minimum_pre_commit_version: '3.2.0'
+
+default_install_hook_types:
+  - pre-push
+  - post-checkout
+  - post-merge
+
+repos:
+  - repo: local
+    hooks:
+      - id: uv-lock-check
+        name: uv lock --check
+        description: check that uv.lock is consistent with pyproject.toml
+        entry: uv lock --check
+        language: system
+        pass_filenames: false
+        files: '^(pyproject\.toml|uv\.lock)$'
+        stages: [pre-push]
+
+      - id: uv-lock-check-after-git
+        name: uv lock --check
+        description: check that uv.lock is consistent with pyproject.toml
+        entry: uv lock --check
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [post-checkout, post-merge]
+
+      - id: uv-sync
+        name: uv sync
+        description: sync dependencies
+
+        entry: uv sync --no-active --locked
+
+        language: system
+        always_run: true
+        pass_filenames: false
+        stages: [post-checkout, post-merge]
+        verbose: true
+
+      - id: ruff-check
+        name: ruff check
+        description: check for style issues
+        entry: uv run ruff check --force-exclude
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: ruff-format
+        name: ruff format
+        description: check that files are formatted
+        entry: uv run ruff format --check --force-exclude
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: md-format
+        name: md format
+        description: format markdown files
+        entry: uv run mdformat --check
+        language: system
+        files: '\.md$'
+        stages: [pre-push]

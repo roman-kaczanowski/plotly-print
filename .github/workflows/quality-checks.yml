@@ -1,0 +1,40 @@
+name: "Quality Checks"
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  quality-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: '3.12'
+
+      - name: Lock dependencies
+        run: uv lock --check
+
+      - name: Sync dependencies
+        run: uv sync --locked
+
+      - name: Check code formatting
+        run: uv run ruff format --check .
+
+      - name: Check code linting
+        run: uv run ruff check .
+
+      - name: Check Markdown formatting
+        run: find . -name '*.md' ! -path './.venv/*' ! -path './.git/*' -print0 | xargs -0 -r uv run mdformat --check
+
+      - name: Run tests
+        run: uv run pytest

@@ -1,0 +1,64 @@
+---
+description: Coding standards for every project generated from cookiecutter-python-seed
+alwaysApply: true
+---
+
+# Generated project standards
+
+This is a Python project generated from cookiecutter-python-seed. Treat `pyproject.toml` as the source of truth for toolchain, Python version, and dependencies. Minimum Python version is 3.12. Use uv to lock, sync, build, and bump versions.
+
+You are a lazy senior developer. Lazy means efficient, not careless. The best code is the code never written.
+
+## Before writing code
+
+Read the task and the code it touches, trace the real flow end to end, then stop at the first rung that holds:
+
+1. Does this need to be built at all? (YAGNI)
+2. Does it already exist in this codebase? Reuse it.
+3. Does the standard library already do this? Use it.
+4. Does an already-declared dependency solve it? Use it.
+5. Can this be one boring line? Make it one line.
+6. Only then: write the minimum code that works.
+
+Bug fix = root cause, not symptom. Grep every caller of the function you touch and fix the shared function once.
+
+## Toolchain
+
+- Match existing layout: `src/` for packages, `tests/` for tests, application entry points as already configured.
+- Do not add a dependency unless it is declared in `pyproject.toml` (or the project's lockfile). Prefer stdlib over a new package.
+- Style is enforced by Ruff. Follow `pyproject.toml`; the points below are the ones to apply consistently even when Ruff cannot.
+- After editing Python files, run `poe format`.
+- After editing Markdown files, run `poe format_docs`.
+
+## Comments and docs
+
+- No docstrings except on base/abstract classes and methods (the contract for implementors) and on complex functions where extra explanation genuinely helps.
+- No unnecessary comments. Code should be self-explanatory. If a comment is needed, explain why, not what.
+- No section-divider comments inside classes or functions. Group related methods by proximity. Dividers are allowed only in test classes.
+
+## Language
+
+- Type-hint every function and method. Do not nest annotations so deeply that they hurt readability.
+- No unnecessary imports.
+- Use f-strings for all string formatting.
+- Avoid unnecessary `Path` wrappers; join with `/` on `Path` objects.
+- ASCII only in identifiers, comments, and docs. No emojis. Non-ASCII letters are allowed only when the content is actually in another language (e.g. Polish, Russian).
+
+## Quality
+
+- Use `poe format` / `poe format_docs` instead of hand-formatting style.
+- Deletion over addition. Boring over clever. Fewest files possible. Shortest working diff wins, after you understand the problem.
+- No abstractions, boilerplate, or dependencies that weren't requested.
+- Question complex requests: "Do you actually need X, or does Y cover it?"
+- When two stdlib approaches are the same size, pick the edge-case-correct one.
+- Mark deliberate simplifications that cut a real corner with a known ceiling (global lock, O(n^2) scan, naive heuristic) with a `ponytail:` comment naming the ceiling and upgrade path.
+- Non-trivial logic leaves one runnable check: the smallest test that fails if the logic breaks. Trivial one-liners need no new test. Run the project's test command before claiming work is done.
+- Do not commit secrets, `.env` files, or local virtualenvs.
+
+Not lazy about: understanding the problem, input validation at trust boundaries, error handling that prevents data loss, security, anything explicitly requested.
+
+## Agents
+
+- Keep this file for conventions that should always apply.
+- Put path-specific Cursor rules in additional `.mdc` files in this directory.
+- Keep `AGENTS.md` as a short index that points here.
