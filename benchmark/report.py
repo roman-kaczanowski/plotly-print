@@ -19,10 +19,15 @@ def build_readme_section(results: list[dict[str, object]]) -> str:
     n = len(results)
     lo, hi = _speedup_range(results)
     lines = [
-        f'## Performance Benchmarks across {n} Chart Types',
+        '## Benchmarks',
         '',
-        f'Empirical comparison of **plotly-print** vs **Kaleido** across {n} Plotly chart types '
-        '(average per-image export latency after engine warmup):',
+        f'On this run, plotly-print exported all {n} chart types **{lo:.0f}x to {hi:.0f}x faster** than Kaleido.',
+        '',
+        'These are mean per-image PNG export times after both engines were warmed up. Timings are machine-specific; '
+        'use the side-by-side images below to evaluate rendering differences.',
+        '',
+        'See the [raw results](assets/benchmarks/benchmark_summary.json) or '
+        '[run the benchmark locally](CONTRIBUTING.md#kaleido-visual-benchmark).',
         '',
         '| Category | Chart Type | plotly-print | Kaleido | Speedup |',
         '| :--- | :--- | :---: | :---: | :---: |',
@@ -36,10 +41,7 @@ def build_readme_section(results: list[dict[str, object]]) -> str:
     lines.extend(
         [
             '',
-            f'> **Overall**: plotly-print is about **{lo:.0f}x to {hi:.0f}x** faster across these charts, '
-            'with no browser process.',
-            '',
-            '## Visual Fidelity & Side-by-Side Comparisons',
+            '## Visual comparisons',
             '',
             'Side-by-side PNGs (Kaleido left, plotly-print right):',
             '',
