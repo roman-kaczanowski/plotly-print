@@ -2,17 +2,25 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/roman-kaczanowski/plotly-print/quality-checks.yml?branch=main&style=flat-square&label=CI)](https://github.com/roman-kaczanowski/plotly-print/actions/workflows/quality-checks.yml) [![PyPI](https://img.shields.io/pypi/v/plotly-print?style=flat-square)](https://pypi.org/project/plotly-print/) [![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://docs.python.org/3/) [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 
-Lightweight, browser-less static image exporter for Plotly. No Chrome, Chromium, or Playwright. Figures are rendered with an embedded QuickJS runtime, Pillow font metrics, and `resvg-py` for raster output.
+Export Plotly figures to SVG, PNG, JPEG, or WebP without launching Chrome.
 
-Works offline: a plotly.js 2D build is bundled (see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
+plotly-print runs a bundled Plotly.js 2D build in QuickJS, then uses `resvg-py` for raster output. It works offline, has no browser process to install or manage, and can replace Plotly's image-export methods with one call.
 
-## Install
+- Browser-free: no Chrome, Chromium, or Playwright.
+- Fast: avoids browser startup; see the measured [benchmarks](#benchmarks).
+- Familiar: use the direct API or patch Plotly's existing `to_image` and `write_image` methods.
+
+[Install](#installation) | [Direct API](#direct-api) | [Plotly integration](#plotly-integration) | [Benchmarks](#benchmarks)
+
+## Installation
 
 ```bash
 pip install plotly-print
 ```
 
-## Quickstart
+Requires Python 3.12 or newer.
+
+## Direct API
 
 ```python
 import plotly.express as px
@@ -25,7 +33,11 @@ png = plotly_print.to_image(fig, format='png', scale=2)
 plotly_print.write_image(fig, 'chart.png')
 ```
 
-Patch Plotly's `to_image` / `write_image` to use plotly-print:
+`to_image` returns bytes. `write_image` writes to a path or binary file object. Supported formats are SVG, PNG, JPEG, and WebP.
+
+## Plotly integration
+
+Patch Plotly's existing image-export methods:
 
 ```python
 import plotly_print
@@ -33,13 +45,19 @@ import plotly_print
 plotly_print.register()
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and releases.
+After registration, existing calls such as `fig.write_image("chart.png")` use plotly-print. Call `plotly_print.unregister()` to restore Plotly's original methods.
+
+plotly-print targets 2D static charts. The bundled Plotly.js build and its licenses are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 <!-- BENCHMARK-START -->
 
-## Performance Benchmarks across 29 Chart Types
+## Benchmarks
 
-Empirical comparison of **plotly-print** vs **Kaleido** across 29 Plotly chart types (average per-image export latency after engine warmup):
+On this run, plotly-print exported all 29 chart types **11x to 33x faster** than Kaleido.
+
+These are mean per-image PNG export times after both engines were warmed up. Timings are machine-specific; use the side-by-side images below to evaluate rendering differences.
+
+See the [raw results](assets/benchmarks/benchmark_summary.json) or [run the benchmark locally](CONTRIBUTING.md#kaleido-visual-benchmark).
 
 | Category                 | Chart Type                                | plotly-print |  Kaleido  |  Speedup  |
 | :----------------------- | :---------------------------------------- | :----------: | :-------: | :-------: |
@@ -73,9 +91,7 @@ Empirical comparison of **plotly-print** vs **Kaleido** across 29 Plotly chart t
 | **Layout edge cases**    | Annotation arrowheads (incl. circle)      | **86.5 ms**  | 1663.2 ms | **19.2x** |
 | **Layout edge cases**    | Long annotation arrows (dasharray length) | **93.3 ms**  | 1650.6 ms | **17.7x** |
 
-> **Overall**: plotly-print is about **11x to 33x** faster across these charts, with no browser process.
-
-## Visual Fidelity & Side-by-Side Comparisons
+## Visual comparisons
 
 Side-by-side PNGs (Kaleido left, plotly-print right):
 
