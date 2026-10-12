@@ -1,0 +1,292 @@
+[
+  {
+    "key": "scatter_line",
+    "category": "Core Cartesian",
+    "title": "Scatter & Line Chart",
+    "plotly_print_ms": 88.9,
+    "kaleido_ms": 1524.7,
+    "speedup": 17.14,
+    "pixel_diff_max": 213.0,
+    "compare_image": "compare_scatter_line.png"
+  },
+  {
+    "key": "bar",
+    "category": "Core Cartesian",
+    "title": "Grouped Bar Chart",
+    "plotly_print_ms": 93.5,
+    "kaleido_ms": 1642.3,
+    "speedup": 17.57,
+    "pixel_diff_max": 213.0,
+    "compare_image": "compare_bar.png"
+  },
+  {
+    "key": "pie",
+    "category": "Core Cartesian",
+    "title": "Donut / Pie Chart",
+    "plotly_print_ms": 74.4,
+    "kaleido_ms": 1812.6,
+    "speedup": 24.38,
+    "pixel_diff_max": 255.0,
+    "compare_image": "compare_pie.png"
+  },
+  {
+    "key": "box",
+    "category": "Core Cartesian",
+    "title": "Box Plot",
+    "plotly_print_ms": 93.5,
+    "kaleido_ms": 1714.4,
+    "speedup": 18.34,
+    "pixel_diff_max": 213.0,
+    "compare_image": "compare_box.png"
+  },
+  {
+    "key": "violin",
+    "category": "Core Cartesian",
+    "title": "Violin Plot",
+    "plotly_print_ms": 86.5,
+    "kaleido_ms": 1626.1,
+    "speedup": 18.8,
+    "pixel_diff_max": 213.0,
+    "compare_image": "compare_violin.png"
+  },
+  {
+    "key": "histogram",
+    "category": "Core Cartesian",
+    "title": "Frequency Histogram",
+    "plotly_print_ms": 105.5,
+    "kaleido_ms": 1556.6,
+    "speedup": 14.75,
+    "pixel_diff_max": 163.0,
+    "compare_image": "compare_histogram.png"
+  },
+  {
+    "key": "histogram2d",
+    "category": "Core Cartesian",
+    "title": "2D Density Histogram",
+    "plotly_print_ms": 105.5,
+    "kaleido_ms": 1696.5,
+    "speedup": 16.08,
+    "pixel_diff_max": 254.0,
+    "compare_image": "compare_histogram2d.png"
+  },
+  {
+    "key": "contour",
+    "category": "Core Cartesian",
+    "title": "2D Contour Plot",
+    "plotly_print_ms": 135.8,
+    "kaleido_ms": 1744.5,
+    "speedup": 12.85,
+    "pixel_diff_max": 250.0,
+    "compare_image": "compare_contour.png"
+  },
+  {
+    "key": "heatmap",
+    "category": "Core Cartesian",
+    "title": "Performance Heatmap",
+    "plotly_print_ms": 95.4,
+    "kaleido_ms": 1647.1,
+    "speedup": 17.26,
+    "pixel_diff_max": 253.0,
+    "compare_image": "compare_heatmap.png"
+  },
+  {
+    "key": "scatterternary",
+    "category": "Core Cartesian",
+    "title": "Ternary Phase Diagram",
+    "plotly_print_ms": 95.8,
+    "kaleido_ms": 1639.1,
+    "speedup": 17.11,
+    "pixel_diff_max": 160.0,
+    "compare_image": "compare_scatterternary.png"
+  },
+  {
+    "key": "candlestick",
+    "category": "Financial & Business",
+    "title": "Candlestick Stock Chart",
+    "plotly_print_ms": 125.6,
+    "kaleido_ms": 1618.5,
+    "speedup": 12.89,
+    "pixel_diff_max": 213.0,
+    "compare_image": "compare_candlestick.png"
+  },
+  {
+    "key": "ohlc",
+    "category": "Financial & Business",
+    "title": "OHLC Financial Chart",
+    "plotly_print_ms": 159.2,
+    "kaleido_ms": 1686.0,
+    "speedup": 10.59,
+    "pixel_diff_max": 213.0,
+    "compare_image": "compare_ohlc.png"
+  },
+  {
+    "key": "waterfall",
+    "category": "Financial & Business",
+    "title": "Waterfall Profit & Loss",
+    "plotly_print_ms": 67.1,
+    "kaleido_ms": 1561.6,
+    "speedup": 23.28,
+    "pixel_diff_max": 173.0,
+    "compare_image": "compare_waterfall.png"
+  },
+  {
+    "key": "funnel",
+    "category": "Financial & Business",
+    "title": "Sales Conversion Funnel",
+    "plotly_print_ms": 102.3,
+    "kaleido_ms": 1620.2,
+    "speedup": 15.84,
+    "pixel_diff_max": 213.0,
+    "compare_image": "compare_funnel.png"
+  },
+  {
+    "key": "funnelarea",
+    "category": "Financial & Business",
+    "title": "Funnel Area Analysis",
+    "plotly_print_ms": 59.2,
+    "kaleido_ms": 1593.7,
+    "speedup": 26.9,
+    "pixel_diff_max": 186.0,
+    "compare_image": "compare_funnelarea.png"
+  },
+  {
+    "key": "indicator",
+    "category": "Financial & Business",
+    "title": "KPI Performance Indicator",
+    "plotly_print_ms": 69.9,
+    "kaleido_ms": 1607.4,
+    "speedup": 23.01,
+    "pixel_diff_max": 213.0,
+    "compare_image": "compare_indicator.png"
+  },
+  {
+    "key": "treemap",
+    "category": "Hierarchical",
+    "title": "Market Cap Treemap",
+    "plotly_print_ms": 52.9,
+    "kaleido_ms": 1672.0,
+    "speedup": 31.62,
+    "pixel_diff_max": 213.0,
+    "compare_image": "compare_treemap.png"
+  },
+  {
+    "key": "sunburst",
+    "category": "Hierarchical",
+    "title": "Global Sunburst Hierarchy",
+    "plotly_print_ms": 69.8,
+    "kaleido_ms": 1665.6,
+    "speedup": 23.88,
+    "pixel_diff_max": 213.0,
+    "compare_image": "compare_sunburst.png"
+  },
+  {
+    "key": "icicle",
+    "category": "Hierarchical",
+    "title": "Icicle Partition Chart",
+    "plotly_print_ms": 59.8,
+    "kaleido_ms": 1662.9,
+    "speedup": 27.8,
+    "pixel_diff_max": 213.0,
+    "compare_image": "compare_icicle.png"
+  },
+  {
+    "key": "scatterpolar",
+    "category": "Radial & Polar",
+    "title": "Radar Performance Comparison",
+    "plotly_print_ms": 98.2,
+    "kaleido_ms": 1689.3,
+    "speedup": 17.2,
+    "pixel_diff_max": 213.0,
+    "compare_image": "compare_scatterpolar.png"
+  },
+  {
+    "key": "barpolar",
+    "category": "Radial & Polar",
+    "title": "Polar Wind Rose",
+    "plotly_print_ms": 78.3,
+    "kaleido_ms": 1581.8,
+    "speedup": 20.21,
+    "pixel_diff_max": 173.0,
+    "compare_image": "compare_barpolar.png"
+  },
+  {
+    "key": "sankey",
+    "category": "Specialized Diagrams",
+    "title": "Energy Flow Sankey Diagram",
+    "plotly_print_ms": 47.6,
+    "kaleido_ms": 1593.5,
+    "speedup": 33.45,
+    "pixel_diff_max": 163.0,
+    "compare_image": "compare_sankey.png"
+  },
+  {
+    "key": "parcats",
+    "category": "Specialized Diagrams",
+    "title": "Parallel Categories Diagram",
+    "plotly_print_ms": 68.7,
+    "kaleido_ms": 1551.1,
+    "speedup": 22.58,
+    "pixel_diff_max": 163.0,
+    "compare_image": "compare_parcats.png"
+  },
+  {
+    "key": "table",
+    "category": "Specialized Diagrams",
+    "title": "Formatted Data Table",
+    "plotly_print_ms": 96.7,
+    "kaleido_ms": 1588.6,
+    "speedup": 16.42,
+    "pixel_diff_max": 163.0,
+    "compare_image": "compare_table.png"
+  },
+  {
+    "key": "carpet",
+    "category": "Specialized Diagrams",
+    "title": "Carpet Coordinate Plot",
+    "plotly_print_ms": 99.5,
+    "kaleido_ms": 1647.8,
+    "speedup": 16.57,
+    "pixel_diff_max": 160.0,
+    "compare_image": "compare_carpet.png"
+  },
+  {
+    "key": "rotated_ticks_45",
+    "category": "Layout edge cases",
+    "title": "Bar chart with X labels at 45 deg",
+    "plotly_print_ms": 92.5,
+    "kaleido_ms": 1741.8,
+    "speedup": 18.83,
+    "pixel_diff_max": 213.0,
+    "compare_image": "compare_rotated_ticks_45.png"
+  },
+  {
+    "key": "rotated_ticks_90",
+    "category": "Layout edge cases",
+    "title": "Bar chart with X labels at 90 deg",
+    "plotly_print_ms": 101.8,
+    "kaleido_ms": 1609.2,
+    "speedup": 15.8,
+    "pixel_diff_max": 213.0,
+    "compare_image": "compare_rotated_ticks_90.png"
+  },
+  {
+    "key": "annotations_arrowheads",
+    "category": "Layout edge cases",
+    "title": "Annotation arrowheads (incl. circle)",
+    "plotly_print_ms": 86.5,
+    "kaleido_ms": 1663.2,
+    "speedup": 19.22,
+    "pixel_diff_max": 187.0,
+    "compare_image": "compare_annotations_arrowheads.png"
+  },
+  {
+    "key": "annotations_long_arrows",
+    "category": "Layout edge cases",
+    "title": "Long annotation arrows (dasharray length)",
+    "plotly_print_ms": 93.3,
+    "kaleido_ms": 1650.6,
+    "speedup": 17.69,
+    "pixel_diff_max": 213.0,
+    "compare_image": "compare_annotations_long_arrows.png"
+  }
+]

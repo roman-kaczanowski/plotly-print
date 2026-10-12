@@ -15,20 +15,9 @@ from benchmark.compare import pixel_diff_max
 from benchmark.report import write_report
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_OUTPUT = REPO_ROOT / '.artifacts' / 'benchmark'
-
-QUICK_KEYS = (
-    'scatter_line',
-    'bar',
-    'pie',
-    'box',
-    'violin',
-    'histogram',
-    'heatmap',
-    'rotated_ticks_45',
-    'rotated_ticks_90',
-    'annotations_arrowheads',
-)
+DEFAULT_OUTPUT = REPO_ROOT / 'assets' / 'benchmarks'
+README_PATH = REPO_ROOT / 'README.md'
+CHART_KEYS = tuple(CHARTS.keys())
 
 
 def _kaleido_available() -> bool:
@@ -45,14 +34,13 @@ def _benchmark_png(render_fn, fig: go.Figure, rounds: int) -> tuple[bytes, float
     return png, statistics.mean(times)
 
 
-def run_benchmark(*, output_dir: Path, quick: bool, rounds: int) -> int:
+def run_benchmark(*, output_dir: Path, rounds: int) -> int:
     if not _kaleido_available():
         print('kaleido is not installed. Run: poe install')
         return 1
 
     import kaleido  # noqa: F401
 
-    keys = [k for k in QUICK_KEYS if k in CHARTS] if quick else list(CHARTS.keys())
     output_dir.mkdir(parents=True, exist_ok=True)
 
     dummy = go.Figure(data=[go.Scatter(x=[1], y=[1])])
@@ -65,7 +53,7 @@ def run_benchmark(*, output_dir: Path, quick: bool, rounds: int) -> int:
     )
     print('-' * 95)
 
-    for key in keys:
+    for key in CHART_KEYS:
         info = CHARTS[key]
         category = info['category']
         title = info['title']
@@ -84,18 +72,15 @@ def run_benchmark(*, output_dir: Path, quick: bool, rounds: int) -> int:
         )
 
         compare_name = f'compare_{key}.png'
-        compare_path = output_dir / compare_name
         build_side_by_side(
-            png_print,
             png_kaleido,
-            'plotly-print (QuickJS)',
+            png_print,
             'Kaleido (Chromium)',
-            avg_print,
+            'plotly-print (QuickJS)',
             avg_kaleido,
-            compare_path,
+            avg_print,
+            output_dir / compare_name,
         )
-        (output_dir / f'{key}_plotly_print.png').write_bytes(png_print)
-        (output_dir / f'{key}_kaleido.png').write_bytes(png_kaleido)
 
         results.append(
             {
@@ -110,9 +95,10 @@ def run_benchmark(*, output_dir: Path, quick: bool, rounds: int) -> int:
             }
         )
 
-    report_path = write_report(output_dir, results)
+    summary_path = write_report(output_dir, results, readme_path=README_PATH)
     print(f'\nWrote {len(results)} comparisons to {output_dir}')
-    print(f'Report: {report_path}')
+    print(f'Summary: {summary_path}')
+    print(f'Readme: {README_PATH}')
     return 0
 
 
@@ -124,7 +110,6 @@ def main() -> None:
         default=DEFAULT_OUTPUT,
         help=f'Output directory (default: {DEFAULT_OUTPUT})',
     )
-    parser.add_argument('--quick', action='store_true', help='Run core cartesian charts plus rotated tick cases.')
     parser.add_argument('--rounds', type=int, default=3, help='Timing rounds per chart (default: 3).')
     args = parser.parse_args()
-    raise SystemExit(run_benchmark(output_dir=args.output.resolve(), quick=args.quick, rounds=args.rounds))
+    raise SystemExit(run_benchmark(output_dir=args.output.resolve(), rounds=args.rounds))

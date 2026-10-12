@@ -97,7 +97,6 @@ format = [{ cmd = "ruff format ." }, { cmd = "ruff check . --fix" }]
 check = [{ cmd = "ruff format . --check" }, { cmd = "ruff check ." }]
 test = "pytest"
 benchmark = "python -m benchmark"
-benchmark_quick = "python -m benchmark --quick"
 format_docs = { shell = "git ls-files '*.md' | xargs mdformat" }
 check_docs = { shell = "git ls-files '*.md' | xargs mdformat --check" }
 patch = "uv version --bump patch"

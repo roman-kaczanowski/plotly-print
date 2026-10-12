@@ -25,18 +25,19 @@ def _load_fonts() -> tuple[ImageFont.FreeTypeFont | ImageFont.ImageFont, ImageFo
 
 
 def build_side_by_side(
-    print_bytes: bytes,
-    kaleido_bytes: bytes,
-    print_label: str,
-    kaleido_label: str,
-    print_time_s: float,
-    kaleido_time_s: float,
+    before_bytes: bytes,
+    after_bytes: bytes,
+    before_label: str,
+    after_label: str,
+    before_time_s: float,
+    after_time_s: float,
     output_path: Path,
 ) -> None:
-    img_print = Image.open(io.BytesIO(print_bytes)).convert('RGBA')
-    img_kaleido = Image.open(io.BytesIO(kaleido_bytes)).convert('RGBA')
+    """Left = before (baseline), right = after (candidate)."""
+    img_before = Image.open(io.BytesIO(before_bytes)).convert('RGBA')
+    img_after = Image.open(io.BytesIO(after_bytes)).convert('RGBA')
 
-    w, h = img_print.size
+    w, h = img_before.size
     header_h = 70
     banner_w = w * 2 + 30
     banner_h = h + header_h + 30
@@ -45,45 +46,26 @@ def build_side_by_side(
     draw = ImageDraw.Draw(combined)
     font_header, font_sub = _load_fonts()
 
-    x_print = 10
-    y_top = 10
-    draw.rounded_rectangle(
-        [x_print, y_top, x_print + w, y_top + header_h - 10],
-        radius=6,
-        fill=(255, 255, 255, 255),
-        outline=(226, 232, 240, 255),
-        width=1,
-    )
-    draw.text((x_print + 15, y_top + 12), print_label, fill=(15, 23, 42, 255), font=font_header)
-    draw.text(
-        (x_print + 15, y_top + 34),
-        f'Latency: {print_time_s * 1000:.1f} ms',
-        fill=(16, 149, 193, 255),
-        font=font_sub,
-    )
-    combined.paste(img_print, (x_print, y_top + header_h), img_print)
+    def _panel(x: int, img: Image.Image, label: str, time_s: float, accent: tuple[int, int, int, int]) -> None:
+        y_top = 10
+        draw.rounded_rectangle(
+            [x, y_top, x + w, y_top + header_h - 10],
+            radius=6,
+            fill=(255, 255, 255, 255),
+            outline=(226, 232, 240, 255),
+            width=1,
+        )
+        draw.text((x + 15, y_top + 12), label, fill=(15, 23, 42, 255), font=font_header)
+        draw.text((x + 15, y_top + 34), f'Latency: {time_s * 1000:.1f} ms', fill=accent, font=font_sub)
+        combined.paste(img, (x, y_top + header_h), img)
+        draw.rectangle(
+            [x, y_top + header_h, x + w, y_top + header_h + h],
+            outline=(226, 232, 240, 255),
+            width=1,
+        )
 
-    x_k = w + 20
-    draw.rounded_rectangle(
-        [x_k, y_top, x_k + w, y_top + header_h - 10],
-        radius=6,
-        fill=(255, 255, 255, 255),
-        outline=(226, 232, 240, 255),
-        width=1,
-    )
-    draw.text((x_k + 15, y_top + 12), kaleido_label, fill=(15, 23, 42, 255), font=font_header)
-    draw.text(
-        (x_k + 15, y_top + 34),
-        f'Latency: {kaleido_time_s * 1000:.1f} ms',
-        fill=(100, 116, 139, 255),
-        font=font_sub,
-    )
-    combined.paste(img_kaleido, (x_k, y_top + header_h), img_kaleido)
-
-    draw.rectangle(
-        [x_print, y_top + header_h, x_print + w, y_top + header_h + h], outline=(226, 232, 240, 255), width=1
-    )
-    draw.rectangle([x_k, y_top + header_h, x_k + w, y_top + header_h + h], outline=(226, 232, 240, 255), width=1)
+    _panel(10, img_before, before_label, before_time_s, (100, 116, 139, 255))
+    _panel(w + 20, img_after, after_label, after_time_s, (16, 149, 193, 255))
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     combined.save(output_path, 'PNG')
