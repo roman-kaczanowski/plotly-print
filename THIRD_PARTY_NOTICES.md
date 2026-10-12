@@ -2,12 +2,12 @@
 
 ## plotly.js
 
-File: `src/plotly_print/js/plotly-cartesian.min.js`
+File: `src/plotly_print/js/plotly_comprehensive_2d.js`
 
-Official plotly.js **cartesian** partial (minified) v4.1.1, redistributed for offline /
-isolated environments. The full `plotly.min.js` shipped with the `plotly` Python package
-does not load in the embedded QuickJS runtime, so this smaller official partial is bundled
-instead.
+Redistributed plotly.js build (minified) used for offline / isolated 2D static
+rendering in the embedded QuickJS runtime. The full `plotly.min.js` shipped with
+the `plotly` Python package does not load in that runtime, so this smaller
+bundle is included instead.
 
 Copyright 2012-2026, Plotly, Inc.
 All rights reserved.
