@@ -16,8 +16,8 @@ from plotly_print.fonts import get_default_font_manager
 
 _JS_DIR = Path(__file__).resolve().parent / 'js'
 _MICRO_DOM_PATH = _JS_DIR / 'micro_dom.js'
-# Official cartesian partial: full plotly.min.js from the plotly package does not load in QuickJS.
-_PLOTLY_JS_PATH = _JS_DIR / 'plotly-cartesian.min.js'
+# Comprehensive 2D build: full plotly.min.js from the plotly package does not load in QuickJS.
+_PLOTLY_JS_PATH = _JS_DIR / 'plotly_comprehensive_2d.js'
 
 _ENGINE_THREAD_LOCAL = threading.local()
 
