@@ -22,15 +22,15 @@ poe test
 
 ## Kaleido visual benchmark
 
-Compare plotly-print output to Kaleido side by side (not part of the PyPI wheel). Kaleido is in the `test` dependency group and is installed by `poe install` / `uv sync`.
+Compare plotly-print to Kaleido (dev-only; not in the PyPI wheel). Kaleido is in the `test` dependency group and is installed by `poe install` / `uv sync`.
 
 ```shell
-poe benchmark_quick
+poe benchmark
 ```
 
-Full gallery (all chart fixtures): `poe benchmark`.
+Writes side-by-side PNGs (Kaleido / Chromium left, plotly-print / QuickJS right) and `benchmark_summary.json` under `assets/benchmarks/`, and refreshes the speed/visual sections in `README.md` (image links use absolute `raw.githubusercontent.com` URLs). Commit those assets with the README when timings or visuals change.
 
-Outputs are written to `.artifacts/benchmark/` (`report.md`, PNGs, `benchmark_summary.json`).
+`poe test` includes a Kaleido mean-pixel-diff check for **every** chart fixture in `benchmark/cases.py` (skipped if Kaleido is not installed).
 
 ## Release
 

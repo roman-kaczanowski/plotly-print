@@ -6,11 +6,11 @@ import plotly.graph_objects as go
 import pytest
 from benchmark.cases import CHARTS
 from benchmark.compare import pixel_diff_mean
-from benchmark.runner import QUICK_KEYS
+from benchmark.runner import CHART_KEYS
 
 import plotly_print
 
-# Mean absolute channel difference vs Kaleido; quick suite currently peaks near ~3.2.
+# Mean absolute channel difference vs Kaleido.
 MEAN_DIFF_THRESHOLD = 10.0
 
 pytestmark = pytest.mark.skipif(
@@ -26,8 +26,8 @@ def _warmup_engines() -> None:
     dummy.to_image(format='png')
 
 
-@pytest.mark.parametrize('key', QUICK_KEYS)
-def test_quick_chart_mean_pixel_diff_vs_kaleido(key: str) -> None:
+@pytest.mark.parametrize('key', CHART_KEYS)
+def test_chart_mean_pixel_diff_vs_kaleido(key: str) -> None:
     fig = CHARTS[key]['fig']
     print_png = plotly_print.to_image(fig, format='png')
     kaleido_png = fig.to_image(format='png')
