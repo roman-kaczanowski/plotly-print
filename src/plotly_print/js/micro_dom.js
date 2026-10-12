@@ -655,6 +655,524 @@
         return 'start';
     }
 
+    function makeBBox(x, y, w, h) {
+        return {
+            x: x,
+            y: y,
+            width: w,
+            height: h,
+            left: x,
+            top: y,
+            right: x + w,
+            bottom: y + h
+        };
+    }
+
+    // ponytail: O(n) flatten with fixed 24 samples/curve — enough for arrow
+    // heads and layout; upgrade to adaptive subdivision if length accuracy matters.
+    var PATH_CURVE_SAMPLES = 24;
+
+    function dist2(a, b) {
+        var dx = b.x - a.x;
+        var dy = b.y - a.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function lerpPoint(a, b, t) {
+        return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+    }
+
+    function cubicAt(p0, p1, p2, p3, t) {
+        var mt = 1 - t;
+        var mt2 = mt * mt;
+        var t2 = t * t;
+        return {
+            x: mt2 * mt * p0.x + 3 * mt2 * t * p1.x + 3 * mt * t2 * p2.x + t2 * t * p3.x,
+            y: mt2 * mt * p0.y + 3 * mt2 * t * p1.y + 3 * mt * t2 * p2.y + t2 * t * p3.y
+        };
+    }
+
+    function quadAt(p0, p1, p2, t) {
+        var mt = 1 - t;
+        return {
+            x: mt * mt * p0.x + 2 * mt * t * p1.x + t * t * p2.x,
+            y: mt * mt * p0.y + 2 * mt * t * p1.y + t * t * p2.y
+        };
+    }
+
+    function sampleCubic(p0, p1, p2, p3, out) {
+        for (var i = 1; i <= PATH_CURVE_SAMPLES; i++) {
+            out.push(cubicAt(p0, p1, p2, p3, i / PATH_CURVE_SAMPLES));
+        }
+    }
+
+    function sampleQuad(p0, p1, p2, out) {
+        for (var i = 1; i <= PATH_CURVE_SAMPLES; i++) {
+            out.push(quadAt(p0, p1, p2, i / PATH_CURVE_SAMPLES));
+        }
+    }
+
+    /** SVG F.6.5 endpoint-to-center, then sample the elliptical arc. */
+    function sampleArc(p0, rx, ry, phiDeg, largeArc, sweep, p1, out) {
+        rx = Math.abs(rx);
+        ry = Math.abs(ry);
+        if (rx === 0 || ry === 0 || (p0.x === p1.x && p0.y === p1.y)) {
+            out.push({ x: p1.x, y: p1.y });
+            return;
+        }
+
+        var phi = (phiDeg * Math.PI) / 180;
+        var cosPhi = Math.cos(phi);
+        var sinPhi = Math.sin(phi);
+        var dx = (p0.x - p1.x) / 2;
+        var dy = (p0.y - p1.y) / 2;
+        var x1p = cosPhi * dx + sinPhi * dy;
+        var y1p = -sinPhi * dx + cosPhi * dy;
+
+        var rx2 = rx * rx;
+        var ry2 = ry * ry;
+        var x1p2 = x1p * x1p;
+        var y1p2 = y1p * y1p;
+        var lambda = x1p2 / rx2 + y1p2 / ry2;
+        if (lambda > 1) {
+            var s = Math.sqrt(lambda);
+            rx *= s;
+            ry *= s;
+            rx2 = rx * rx;
+            ry2 = ry * ry;
+        }
+
+        var denom = rx2 * y1p2 + ry2 * x1p2;
+        var num = rx2 * ry2 - denom;
+        var cRad = denom === 0 ? 0 : Math.max(0, num / denom);
+        var cSign = largeArc === sweep ? -1 : 1;
+        var cxp = cSign * Math.sqrt(cRad) * (rx * y1p) / ry;
+        var cyp = cSign * Math.sqrt(cRad) * (-ry * x1p) / rx;
+
+        var cx = cosPhi * cxp - sinPhi * cyp + (p0.x + p1.x) / 2;
+        var cy = sinPhi * cxp + cosPhi * cyp + (p0.y + p1.y) / 2;
+
+        function angle(ux, uy, vx, vy) {
+            var dot = ux * vx + uy * vy;
+            var len = Math.sqrt(ux * ux + uy * uy) * Math.sqrt(vx * vx + vy * vy);
+            var ang = Math.acos(Math.max(-1, Math.min(1, len === 0 ? 0 : dot / len)));
+            return ux * vy - uy * vx < 0 ? -ang : ang;
+        }
+
+        var theta1 = angle(1, 0, (x1p - cxp) / rx, (y1p - cyp) / ry);
+        var dTheta = angle(
+            (x1p - cxp) / rx, (y1p - cyp) / ry,
+            (-x1p - cxp) / rx, (-y1p - cyp) / ry
+        );
+        if (!sweep && dTheta > 0) dTheta -= 2 * Math.PI;
+        if (sweep && dTheta < 0) dTheta += 2 * Math.PI;
+
+        for (var i = 1; i <= PATH_CURVE_SAMPLES; i++) {
+            var t = i / PATH_CURVE_SAMPLES;
+            var theta = theta1 + t * dTheta;
+            var cosT = Math.cos(theta);
+            var sinT = Math.sin(theta);
+            out.push({
+                x: cosPhi * rx * cosT - sinPhi * ry * sinT + cx,
+                y: sinPhi * rx * cosT + cosPhi * ry * sinT + cy
+            });
+        }
+    }
+
+    /**
+     * Flatten SVG path `d` into subpaths of polyline points.
+     * Supports M/L/H/V/Z and samples C/S/Q/T/A.
+     */
+    function flattenPathData(d) {
+        var subpaths = [];
+        if (!d) return subpaths;
+
+        var tokens = [];
+        var re = /([MmLlHhVvCcSsQqTtAaZz])|([+-]?(?:\d*\.\d+|\d+)(?:[eE][+-]?\d+)?)/g;
+        var m;
+        while ((m = re.exec(String(d))) !== null) {
+            tokens.push(m[1] || m[2]);
+        }
+
+        var i = 0;
+        var cx = 0, cy = 0;
+        var startX = 0, startY = 0;
+        var lastCx = 0, lastCy = 0;
+        var lastQCx = 0, lastQCy = 0;
+        var lastCmd = '';
+        var cur = null;
+
+        function nextNum() {
+            if (i >= tokens.length) return NaN;
+            if (/^[MmLlHhVvCcSsQqTtAaZz]$/.test(tokens[i])) return NaN;
+            var v = parseFloat(tokens[i]);
+            if (isNaN(v)) return NaN;
+            i++;
+            return v;
+        }
+
+        function startSubpath(x, y) {
+            cur = [{ x: x, y: y }];
+            subpaths.push(cur);
+            startX = x;
+            startY = y;
+            cx = x;
+            cy = y;
+        }
+
+        function ensureSubpath() {
+            if (!cur) startSubpath(cx, cy);
+        }
+
+        function addPoint(x, y) {
+            ensureSubpath();
+            cur.push({ x: x, y: y });
+            cx = x;
+            cy = y;
+        }
+
+        while (i < tokens.length) {
+            var tok = tokens[i];
+            var cmd;
+            if (/^[MmLlHhVvCcSsQqTtAaZz]$/.test(tok)) {
+                cmd = tok;
+                i++;
+            } else if (lastCmd) {
+                // Implicit command repetition.
+                if (lastCmd === 'M') cmd = 'L';
+                else if (lastCmd === 'm') cmd = 'l';
+                else cmd = lastCmd;
+            } else {
+                i++;
+                continue;
+            }
+
+            var abs = cmd === cmd.toUpperCase();
+            var c = cmd.toUpperCase();
+            var prevCmd = lastCmd;
+            lastCmd = cmd;
+
+            if (c === 'Z') {
+                if (cur && (cx !== startX || cy !== startY)) {
+                    cur.push({ x: startX, y: startY });
+                }
+                cx = startX;
+                cy = startY;
+                lastCx = cx;
+                lastCy = cy;
+                lastQCx = cx;
+                lastQCy = cy;
+                continue;
+            }
+
+            if (c === 'M') {
+                var mx = nextNum();
+                var my = nextNum();
+                if (isNaN(mx) || isNaN(my)) break;
+                if (!abs) {
+                    mx += cx;
+                    my += cy;
+                }
+                startSubpath(mx, my);
+                lastCx = mx;
+                lastCy = my;
+                lastQCx = mx;
+                lastQCy = my;
+                // Extra coordinate pairs after M/m are treated as L/l.
+                lastCmd = abs ? 'L' : 'l';
+                continue;
+            }
+
+            if (c === 'L') {
+                while (true) {
+                    var lx = nextNum();
+                    var ly = nextNum();
+                    if (isNaN(lx) || isNaN(ly)) {
+                        if (!isNaN(lx)) i--;
+                        break;
+                    }
+                    if (!abs) {
+                        lx += cx;
+                        ly += cy;
+                    }
+                    addPoint(lx, ly);
+                    lastCx = cx;
+                    lastCy = cy;
+                    lastQCx = cx;
+                    lastQCy = cy;
+                }
+                continue;
+            }
+
+            if (c === 'H') {
+                while (true) {
+                    var hx = nextNum();
+                    if (isNaN(hx)) break;
+                    if (!abs) hx += cx;
+                    addPoint(hx, cy);
+                    lastCx = cx;
+                    lastCy = cy;
+                    lastQCx = cx;
+                    lastQCy = cy;
+                }
+                continue;
+            }
+
+            if (c === 'V') {
+                while (true) {
+                    var vy = nextNum();
+                    if (isNaN(vy)) break;
+                    if (!abs) vy += cy;
+                    addPoint(cx, vy);
+                    lastCx = cx;
+                    lastCy = cy;
+                    lastQCx = cx;
+                    lastQCy = cy;
+                }
+                continue;
+            }
+
+            if (c === 'C') {
+                while (true) {
+                    var c1x = nextNum(), c1y = nextNum();
+                    var c2x = nextNum(), c2y = nextNum();
+                    var x = nextNum(), y = nextNum();
+                    if (isNaN(c1x) || isNaN(c1y) || isNaN(c2x) || isNaN(c2y) || isNaN(x) || isNaN(y)) {
+                        break;
+                    }
+                    if (!abs) {
+                        c1x += cx; c1y += cy;
+                        c2x += cx; c2y += cy;
+                        x += cx; y += cy;
+                    }
+                    ensureSubpath();
+                    sampleCubic({ x: cx, y: cy }, { x: c1x, y: c1y }, { x: c2x, y: c2y }, { x: x, y: y }, cur);
+                    lastCx = c2x;
+                    lastCy = c2y;
+                    lastQCx = cx;
+                    lastQCy = cy;
+                    cx = x;
+                    cy = y;
+                }
+                continue;
+            }
+
+            if (c === 'S') {
+                while (true) {
+                    var s2x = nextNum(), s2y = nextNum();
+                    var sx = nextNum(), sy = nextNum();
+                    if (isNaN(s2x) || isNaN(s2y) || isNaN(sx) || isNaN(sy)) break;
+                    if (!abs) {
+                        s2x += cx; s2y += cy;
+                        sx += cx; sy += cy;
+                    }
+                    var s1x = cx;
+                    var s1y = cy;
+                    var prev = prevCmd.toUpperCase();
+                    if (prev === 'C' || prev === 'S') {
+                        s1x = 2 * cx - lastCx;
+                        s1y = 2 * cy - lastCy;
+                    }
+                    ensureSubpath();
+                    sampleCubic({ x: cx, y: cy }, { x: s1x, y: s1y }, { x: s2x, y: s2y }, { x: sx, y: sy }, cur);
+                    lastCx = s2x;
+                    lastCy = s2y;
+                    lastQCx = cx;
+                    lastQCy = cy;
+                    cx = sx;
+                    cy = sy;
+                    prevCmd = cmd;
+                }
+                continue;
+            }
+
+            if (c === 'Q') {
+                while (true) {
+                    var q1x = nextNum(), q1y = nextNum();
+                    var qx = nextNum(), qy = nextNum();
+                    if (isNaN(q1x) || isNaN(q1y) || isNaN(qx) || isNaN(qy)) break;
+                    if (!abs) {
+                        q1x += cx; q1y += cy;
+                        qx += cx; qy += cy;
+                    }
+                    ensureSubpath();
+                    sampleQuad({ x: cx, y: cy }, { x: q1x, y: q1y }, { x: qx, y: qy }, cur);
+                    lastQCx = q1x;
+                    lastQCy = q1y;
+                    lastCx = cx;
+                    lastCy = cy;
+                    cx = qx;
+                    cy = qy;
+                }
+                continue;
+            }
+
+            if (c === 'T') {
+                while (true) {
+                    var tx = nextNum(), ty = nextNum();
+                    if (isNaN(tx) || isNaN(ty)) break;
+                    if (!abs) {
+                        tx += cx;
+                        ty += cy;
+                    }
+                    var tcx = cx;
+                    var tcy = cy;
+                    var prevT = prevCmd.toUpperCase();
+                    if (prevT === 'Q' || prevT === 'T') {
+                        tcx = 2 * cx - lastQCx;
+                        tcy = 2 * cy - lastQCy;
+                    }
+                    ensureSubpath();
+                    sampleQuad({ x: cx, y: cy }, { x: tcx, y: tcy }, { x: tx, y: ty }, cur);
+                    lastQCx = tcx;
+                    lastQCy = tcy;
+                    lastCx = cx;
+                    lastCy = cy;
+                    cx = tx;
+                    cy = ty;
+                    prevCmd = cmd;
+                }
+                continue;
+            }
+
+            if (c === 'A') {
+                while (true) {
+                    var arx = nextNum(), ary = nextNum();
+                    var aPhi = nextNum();
+                    var aLarge = nextNum(), aSweep = nextNum();
+                    var ax = nextNum(), ay = nextNum();
+                    if (isNaN(arx) || isNaN(ary) || isNaN(aPhi) || isNaN(aLarge) || isNaN(aSweep) || isNaN(ax) || isNaN(ay)) {
+                        break;
+                    }
+                    if (!abs) {
+                        ax += cx;
+                        ay += cy;
+                    }
+                    ensureSubpath();
+                    sampleArc(
+                        { x: cx, y: cy },
+                        arx, ary, aPhi,
+                        aLarge !== 0, aSweep !== 0,
+                        { x: ax, y: ay },
+                        cur
+                    );
+                    lastCx = cx;
+                    lastCy = cy;
+                    lastQCx = cx;
+                    lastQCy = cy;
+                    cx = ax;
+                    cy = ay;
+                }
+                continue;
+            }
+        }
+
+        return subpaths;
+    }
+
+    function pathLengthFromSubpaths(subpaths) {
+        var total = 0;
+        for (var s = 0; s < subpaths.length; s++) {
+            var pts = subpaths[s];
+            for (var i = 1; i < pts.length; i++) {
+                total += dist2(pts[i - 1], pts[i]);
+            }
+        }
+        return total;
+    }
+
+    function pointAtLengthOnSubpaths(subpaths, len) {
+        var total = pathLengthFromSubpaths(subpaths);
+        if (subpaths.length === 0 || subpaths[0].length === 0) {
+            return { x: 0, y: 0 };
+        }
+        if (total <= 0) {
+            return { x: subpaths[0][0].x, y: subpaths[0][0].y };
+        }
+        if (len <= 0) {
+            return { x: subpaths[0][0].x, y: subpaths[0][0].y };
+        }
+        if (len >= total) {
+            var lastSub = subpaths[subpaths.length - 1];
+            var lastPt = lastSub[lastSub.length - 1];
+            return { x: lastPt.x, y: lastPt.y };
+        }
+        var remaining = len;
+        for (var s = 0; s < subpaths.length; s++) {
+            var pts = subpaths[s];
+            for (var i = 1; i < pts.length; i++) {
+                var segLen = dist2(pts[i - 1], pts[i]);
+                if (remaining <= segLen) {
+                    var t = segLen === 0 ? 0 : remaining / segLen;
+                    return lerpPoint(pts[i - 1], pts[i], t);
+                }
+                remaining -= segLen;
+            }
+        }
+        var endSub = subpaths[subpaths.length - 1];
+        var endPt = endSub[endSub.length - 1];
+        return { x: endPt.x, y: endPt.y };
+    }
+
+    function bboxFromSubpaths(subpaths) {
+        var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        var any = false;
+        for (var s = 0; s < subpaths.length; s++) {
+            var pts = subpaths[s];
+            for (var i = 0; i < pts.length; i++) {
+                any = true;
+                if (pts[i].x < minX) minX = pts[i].x;
+                if (pts[i].y < minY) minY = pts[i].y;
+                if (pts[i].x > maxX) maxX = pts[i].x;
+                if (pts[i].y > maxY) maxY = pts[i].y;
+            }
+        }
+        if (!any) return makeBBox(0, 0, 0, 0);
+        return makeBBox(minX, minY, maxX - minX, maxY - minY);
+    }
+
+    function lineEndpoints(el) {
+        return {
+            x1: parseFloat(el.getAttribute('x1')) || 0,
+            y1: parseFloat(el.getAttribute('y1')) || 0,
+            x2: parseFloat(el.getAttribute('x2')) || 0,
+            y2: parseFloat(el.getAttribute('y2')) || 0
+        };
+    }
+
+    function shapeBBox(el, tag) {
+        if (tag === 'path') {
+            return bboxFromSubpaths(flattenPathData(el.getAttribute('d') || ''));
+        }
+        if (tag === 'line') {
+            var ln = lineEndpoints(el);
+            var minX = Math.min(ln.x1, ln.x2);
+            var minY = Math.min(ln.y1, ln.y2);
+            return makeBBox(minX, minY, Math.abs(ln.x2 - ln.x1), Math.abs(ln.y2 - ln.y1));
+        }
+        if (tag === 'rect') {
+            var rx = parseFloat(el.getAttribute('x')) || 0;
+            var ry = parseFloat(el.getAttribute('y')) || 0;
+            var rw = parseFloat(el.getAttribute('width')) || 0;
+            var rh = parseFloat(el.getAttribute('height')) || 0;
+            return makeBBox(rx, ry, rw, rh);
+        }
+        if (tag === 'circle') {
+            var ccx = parseFloat(el.getAttribute('cx')) || 0;
+            var ccy = parseFloat(el.getAttribute('cy')) || 0;
+            var cr = parseFloat(el.getAttribute('r')) || 0;
+            return makeBBox(ccx - cr, ccy - cr, 2 * cr, 2 * cr);
+        }
+        if (tag === 'ellipse') {
+            var ecx = parseFloat(el.getAttribute('cx')) || 0;
+            var ecy = parseFloat(el.getAttribute('cy')) || 0;
+            var erx = parseFloat(el.getAttribute('rx')) || 0;
+            var ery = parseFloat(el.getAttribute('ry')) || 0;
+            return makeBBox(ecx - erx, ecy - ery, 2 * erx, 2 * ery);
+        }
+        return null;
+    }
+
     Element.prototype.getBBox = function() {
         var tag = this.tagName.toLowerCase();
         var x = parseFloat(this.getAttribute('x')) || 0;
@@ -798,6 +1316,9 @@
             };
         }
 
+        var shapeBB = shapeBBox(this, tag);
+        if (shapeBB) return shapeBB;
+
         // For groups (<g>, <svg>), aggregate children bounding boxes.
         // Each child's transform is applied to its bbox corners (SVG getBBox on a
         // group includes child transforms; an element's own transform is NOT part
@@ -874,12 +1395,34 @@
     };
 
     Element.prototype.getTotalLength = function() {
+        var tag = this.tagName.toLowerCase();
+        if (tag === 'path') {
+            return pathLengthFromSubpaths(flattenPathData(this.getAttribute('d') || ''));
+        }
+        if (tag === 'line') {
+            var ln = lineEndpoints(this);
+            return dist2({ x: ln.x1, y: ln.y1 }, { x: ln.x2, y: ln.y2 });
+        }
         var bb = this.getBBox();
         var p = (bb.width + bb.height) * 2;
         return p > 0 ? p : 100;
     };
 
     Element.prototype.getPointAtLength = function(len) {
+        var tag = this.tagName.toLowerCase();
+        if (tag === 'path') {
+            return pointAtLengthOnSubpaths(flattenPathData(this.getAttribute('d') || ''), len);
+        }
+        if (tag === 'line') {
+            var ln = lineEndpoints(this);
+            var p0 = { x: ln.x1, y: ln.y1 };
+            var p1 = { x: ln.x2, y: ln.y2 };
+            var total = dist2(p0, p1);
+            if (total <= 0) return { x: p0.x, y: p0.y };
+            if (len <= 0) return { x: p0.x, y: p0.y };
+            if (len >= total) return { x: p1.x, y: p1.y };
+            return lerpPoint(p0, p1, len / total);
+        }
         var bb = this.getBBox();
         return { x: bb.x, y: bb.y };
     };

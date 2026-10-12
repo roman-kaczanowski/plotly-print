@@ -27,6 +27,7 @@ QUICK_KEYS = (
     'heatmap',
     'rotated_ticks_45',
     'rotated_ticks_90',
+    'annotations_arrowheads',
 )
 
 

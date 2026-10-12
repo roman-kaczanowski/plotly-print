@@ -405,4 +405,38 @@ CHARTS = {
             ),
         ),
     },
+    'annotations_arrowheads': {
+        'category': 'Layout edge cases',
+        'title': 'Annotation arrowheads (incl. circle)',
+        'fig': go.Figure(
+            data=[go.Scatter(x=[1, 2, 3, 4, 5], y=[10, 15, 13, 17, 14], mode='lines+markers', name='Series')],
+            layout=go.Layout(
+                title='Annotation Arrowheads',
+                width=650,
+                height=450,
+                annotations=[
+                    dict(x=2, y=15, ax=50, ay=-40, text='triangle', showarrow=True, arrowhead=2, arrowsize=1.2),
+                    dict(x=3, y=13, ax=-60, ay=-50, text='circle', showarrow=True, arrowhead=6, arrowsize=1.5),
+                    dict(x=4, y=17, ax=0, ay=-70, text='bar', showarrow=True, arrowhead=5, arrowsize=1.2),
+                    dict(x=5, y=14, ax=-80, ay=30, text='line', showarrow=True, arrowhead=0, arrowsize=1),
+                ],
+            ),
+        ),
+    },
+    'annotations_long_arrows': {
+        'category': 'Layout edge cases',
+        'title': 'Long annotation arrows (dasharray length)',
+        'fig': go.Figure(
+            data=[go.Scatter(x=[0, 1, 2, 3], y=[0, 2, 1, 3], mode='markers')],
+            layout=go.Layout(
+                title='Long Annotation Arrows',
+                width=650,
+                height=450,
+                annotations=[
+                    dict(x=2.5, y=2.5, ax=-180, ay=-120, text='far tip', showarrow=True, arrowhead=6, arrowsize=1.4),
+                    dict(x=0.5, y=0.5, ax=160, ay=-100, text='other', showarrow=True, arrowhead=3, arrowsize=1.2),
+                ],
+            ),
+        ),
+    },
 }
