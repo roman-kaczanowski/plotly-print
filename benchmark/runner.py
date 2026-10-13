@@ -49,7 +49,7 @@ def run_benchmark(*, output_dir: Path, rounds: int) -> int:
 
     results: list[dict[str, object]] = []
     print(
-        f'{"Category":<22} | {"Chart Type":<26} | {"plotly-print":<12} | {"Kaleido":<11} | {"Speedup":<8} | {"Px max"}'
+        f'{"Category":<22} | {"Chart Type":<26} | {"Kaleido":<11} | {"plotly-print":<12} | {"Speedup":<8} | {"Px max"}'
     )
     print('-' * 95)
 
@@ -67,8 +67,8 @@ def run_benchmark(*, output_dir: Path, rounds: int) -> int:
         px_label = f'{px_max:.0f}' if px_max is not None else 'size mismatch'
 
         print(
-            f'{category:<22} | {title:<26} | {avg_print * 1000:>9.1f} ms | '
-            f'{avg_kaleido * 1000:>9.1f} ms | {speedup:>6.1f}x | {px_label}'
+            f'{category:<22} | {title:<26} | {avg_kaleido * 1000:>9.1f} ms | '
+            f'{avg_print * 1000:>9.1f} ms | {speedup:>6.1f}x | {px_label}'
         )
 
         compare_name = f'compare_{key}.png'
