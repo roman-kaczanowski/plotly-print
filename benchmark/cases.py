@@ -382,8 +382,8 @@ CHARTS = {
             data=[go.Bar(x=['Category A', 'Category B', 'Category C', 'Category D'], y=[1, 2, 3, 4])],
             layout=go.Layout(
                 template='plotly',
-                width=500,
-                height=400,
+                width=650,
+                height=450,
                 title='Tickangle 45',
                 xaxis=dict(tickangle=45, title='X Axis Title', automargin=True),
                 yaxis=dict(title='Y'),
@@ -397,8 +397,8 @@ CHARTS = {
             data=[go.Bar(x=['Category A', 'Category B', 'Category C', 'Category D'], y=[1, 2, 3, 4])],
             layout=go.Layout(
                 template='plotly',
-                width=500,
-                height=400,
+                width=650,
+                height=450,
                 title='Tickangle 90',
                 xaxis=dict(tickangle=90, title='X Axis Title', automargin=True),
                 yaxis=dict(title='Y'),
