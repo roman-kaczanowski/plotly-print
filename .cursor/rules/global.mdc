@@ -1,11 +1,13 @@
 ---
-description: Coding standards for every project generated from cookiecutter-python-seed
+description: Coding standards for plotly-print (Python package + QuickJS micro-DOM)
 alwaysApply: true
 ---
 
-# Generated project standards
+# Project standards
 
-This is a Python project generated from cookiecutter-python-seed. Treat `pyproject.toml` as the source of truth for toolchain, Python version, and dependencies. Minimum Python version is 3.12. Use uv to lock, sync, build, and bump versions.
+plotly-print is a Python package (cookiecutter-python-seed layout) plus first-party QuickJS JavaScript under `src/plotly_print/js/` (micro-DOM for static Plotly rendering). Treat `pyproject.toml` as the source of truth for toolchain, Python version, and dependencies. Minimum Python version is 3.12. Use uv to lock, sync, build, and bump versions.
+
+JS-specific conventions: `.cursor/rules/javascript.mdc` (applies under `src/plotly_print/js/`).
 
 You are a lazy senior developer. Lazy means efficient, not careless. The best code is the code never written.
 
@@ -26,9 +28,10 @@ Bug fix = root cause, not symptom. Grep every caller of the function you touch a
 
 - Match existing layout: `src/` for packages, `tests/` for tests, application entry points as already configured.
 - Do not add a dependency unless it is declared in `pyproject.toml` (or the project's lockfile). Prefer stdlib over a new package.
-- Style is enforced by Ruff. Follow `pyproject.toml`; the points below are the ones to apply consistently even when Ruff cannot.
+- Python style is enforced by Ruff. Follow `pyproject.toml`; the points below are the ones to apply consistently even when Ruff cannot.
 - After editing Python files, run `poe format`.
 - After editing Markdown files, run `poe format_docs`.
+- There is no JS formatter/linter task; match `micro_dom.js` style. Do not hand-edit vendored Plotly bundles.
 
 ## Comments and docs
 
@@ -38,15 +41,20 @@ Bug fix = root cause, not symptom. Grep every caller of the function you touch a
 
 ## Language
 
-- Type-hint every function and method. Do not nest annotations so deeply that they hurt readability.
+Shared (Python and JS):
+
+- ASCII only in identifiers, comments, and docs. No emojis. Non-ASCII letters are allowed only when the content is actually in another language (e.g. Polish, Russian).
 - No unnecessary imports.
+
+Python:
+
+- Type-hint every function and method. Do not nest annotations so deeply that they hurt readability.
 - Use f-strings for all string formatting.
 - Avoid unnecessary `Path` wrappers; join with `/` on `Path` objects.
-- ASCII only in identifiers, comments, and docs. No emojis. Non-ASCII letters are allowed only when the content is actually in another language (e.g. Polish, Russian).
 
 ## Quality
 
-- Use `poe format` / `poe format_docs` instead of hand-formatting style.
+- Use `poe format` / `poe format_docs` instead of hand-formatting style (Python/Markdown).
 - Deletion over addition. Boring over clever. Fewest files possible. Shortest working diff wins, after you understand the problem.
 - No abstractions, boilerplate, or dependencies that weren't requested.
 - Question complex requests: "Do you actually need X, or does Y cover it?"

@@ -689,7 +689,7 @@
         return makeBBox(minX, y - ascent, width, height);
     }
 
-    // ponytail: O(n) flatten with fixed 24 samples/curve — enough for arrow
+    // ponytail: O(n) flatten with fixed 24 samples/curve - enough for arrow
     // heads and layout; upgrade to adaptive subdivision if length accuracy matters.
     var PATH_CURVE_SAMPLES = 24;
 
@@ -1301,7 +1301,7 @@
     Element.prototype.getBoundingClientRect = function() {
         var bb = this.getBBox();
         // Compose full ancestor matrices (including this element's transform).
-        // Walk self → root so final = T_root * ... * T_parent * T_self.
+        // Walk self -> root so final = T_root * ... * T_parent * T_self.
         var matrix = identityMatrix();
         var cur = this;
         while (cur && cur.nodeType === 1) {
@@ -1447,6 +1447,23 @@
 
     function SVGElement(tagName) { Element.call(this, tagName, 'http://www.w3.org/2000/svg'); }
     SVGElement.prototype = Object.create(Element.prototype);
+
+    // SVGGraphicsElement.transform -> SVGAnimatedTransformList.
+    // Plotly/d3 read transform.baseVal.consolidate().matrix after setAttribute.
+    Object.defineProperty(SVGElement.prototype, 'transform', {
+        get: function() {
+            var el = this;
+            return {
+                baseVal: {
+                    consolidate: function() {
+                        var attr = el.getAttribute('transform');
+                        if (!attr || !String(attr).trim()) return null;
+                        return { matrix: parseTransform(attr) };
+                    }
+                }
+            };
+        }
+    });
 
     function HTMLStyleElement() {
         HTMLElement.call(this, 'style');

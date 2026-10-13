@@ -1,6 +1,6 @@
 # Agent instructions
 
-This project was generated from **cookiecutter-python-seed**.
+This project was generated from **cookiecutter-python-seed**, with first-party QuickJS JavaScript for Plotly static rendering.
 
 ## Tooling
 
@@ -10,5 +10,6 @@ This project was generated from **cookiecutter-python-seed**.
 ## Standards
 
 - Always-on: `.cursor/rules/global.mdc`
+- JavaScript (`src/plotly_print/js/`): `.cursor/rules/javascript.mdc`
 - Markdown (`.md` files): `.cursor/rules/markdown.mdc`
 - Local scratch output: `.cursor/rules/artifacts.mdc`
