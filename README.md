@@ -53,7 +53,7 @@ plotly-print targets 2D static charts. The bundled Plotly.js build and its licen
 
 ## Benchmarks
 
-On this run, plotly-print exported all 29 chart types **11x to 84x faster** than Kaleido.
+On this run, plotly-print exported all 30 chart types **12x to 33x faster** than Kaleido.
 
 These are mean per-image PNG export times after both engines were warmed up. Timings are machine-specific; use the side-by-side images below to evaluate rendering differences.
 
@@ -61,35 +61,36 @@ See the [raw results](assets/benchmarks/benchmark_summary.json) or [run the benc
 
 | Category                 | Chart Type                                |  Kaleido  | plotly-print |  Speedup  |
 | :----------------------- | :---------------------------------------- | :-------: | :----------: | :-------: |
-| **Core Cartesian**       | Scatter & Line Chart                      | 1732.3 ms | **99.5 ms**  | **17.4x** |
-| **Core Cartesian**       | Grouped Bar Chart                         | 1662.3 ms | **95.9 ms**  | **17.3x** |
-| **Core Cartesian**       | Donut / Pie Chart                         | 1664.5 ms | **74.7 ms**  | **22.3x** |
-| **Core Cartesian**       | Box Plot                                  | 1893.0 ms | **93.1 ms**  | **20.3x** |
-| **Core Cartesian**       | Violin Plot                               | 2504.6 ms | **99.2 ms**  | **25.2x** |
-| **Core Cartesian**       | Frequency Histogram                       | 1695.0 ms | **78.6 ms**  | **21.6x** |
-| **Core Cartesian**       | 2D Density Histogram                      | 2136.3 ms | **98.8 ms**  | **21.6x** |
-| **Core Cartesian**       | 2D Contour Plot                           | 1630.0 ms | **132.2 ms** | **12.3x** |
-| **Core Cartesian**       | Performance Heatmap                       | 6032.4 ms | **87.6 ms**  | **68.9x** |
-| **Core Cartesian**       | Ternary Phase Diagram                     | 8172.7 ms | **97.9 ms**  | **83.5x** |
-| **Financial & Business** | Candlestick Stock Chart                   | 1988.8 ms | **179.8 ms** | **11.1x** |
-| **Financial & Business** | OHLC Financial Chart                      | 1814.0 ms | **131.4 ms** | **13.8x** |
-| **Financial & Business** | Waterfall Profit & Loss                   | 1907.6 ms | **67.0 ms**  | **28.5x** |
-| **Financial & Business** | Sales Conversion Funnel                   | 1914.4 ms | **104.0 ms** | **18.4x** |
-| **Financial & Business** | Funnel Area Analysis                      | 1658.5 ms | **69.7 ms**  | **23.8x** |
-| **Financial & Business** | KPI Performance Indicator                 | 1541.5 ms | **58.6 ms**  | **26.3x** |
-| **Hierarchical**         | Market Cap Treemap                        | 1625.0 ms | **64.9 ms**  | **25.1x** |
-| **Hierarchical**         | Global Sunburst Hierarchy                 | 1698.7 ms | **55.9 ms**  | **30.4x** |
-| **Hierarchical**         | Icicle Partition Chart                    | 1517.1 ms | **59.2 ms**  | **25.6x** |
-| **Radial & Polar**       | Radar Performance Comparison              | 1667.7 ms | **124.3 ms** | **13.4x** |
-| **Radial & Polar**       | Polar Wind Rose                           | 1785.0 ms | **81.7 ms**  | **21.9x** |
-| **Specialized Diagrams** | Energy Flow Sankey Diagram                | 1714.3 ms | **63.6 ms**  | **27.0x** |
-| **Specialized Diagrams** | Parallel Categories Diagram               | 1661.2 ms | **66.5 ms**  | **25.0x** |
-| **Specialized Diagrams** | Formatted Data Table                      | 1819.0 ms | **78.3 ms**  | **23.2x** |
-| **Specialized Diagrams** | Carpet Coordinate Plot                    | 1710.2 ms | **119.2 ms** | **14.3x** |
-| **Layout edge cases**    | Bar chart with X labels at 45 deg         | 1804.5 ms | **110.8 ms** | **16.3x** |
-| **Layout edge cases**    | Bar chart with X labels at 90 deg         | 1886.6 ms | **127.6 ms** | **14.8x** |
-| **Layout edge cases**    | Annotation arrowheads (incl. circle)      | 1657.9 ms | **101.9 ms** | **16.3x** |
-| **Layout edge cases**    | Long annotation arrows (dasharray length) | 1803.9 ms | **98.6 ms**  | **18.3x** |
+| **Core Cartesian**       | Scatter & Line Chart                      | 1668.5 ms | **88.2 ms**  | **18.9x** |
+| **Core Cartesian**       | Grouped Bar Chart                         | 1758.1 ms | **81.3 ms**  | **21.6x** |
+| **Core Cartesian**       | Donut / Pie Chart                         | 1628.6 ms | **73.6 ms**  | **22.1x** |
+| **Core Cartesian**       | Box Plot                                  | 1748.2 ms | **77.1 ms**  | **22.7x** |
+| **Core Cartesian**       | Violin Plot                               | 1623.8 ms | **84.1 ms**  | **19.3x** |
+| **Core Cartesian**       | Frequency Histogram                       | 1878.0 ms | **62.7 ms**  | **30.0x** |
+| **Core Cartesian**       | 2D Density Histogram                      | 1949.4 ms | **98.8 ms**  | **19.7x** |
+| **Core Cartesian**       | 2D Contour Plot                           | 1604.9 ms | **118.7 ms** | **13.5x** |
+| **Core Cartesian**       | Performance Heatmap                       | 1832.4 ms | **87.3 ms**  | **21.0x** |
+| **Core Cartesian**       | Ternary Phase Diagram                     | 1724.9 ms | **84.9 ms**  | **20.3x** |
+| **Financial & Business** | Candlestick Stock Chart                   | 1741.1 ms | **140.5 ms** | **12.4x** |
+| **Financial & Business** | OHLC Financial Chart                      | 1670.0 ms | **131.3 ms** | **12.7x** |
+| **Financial & Business** | Waterfall Profit & Loss                   | 1793.0 ms | **64.7 ms**  | **27.7x** |
+| **Financial & Business** | Sales Conversion Funnel                   | 1629.9 ms | **91.1 ms**  | **17.9x** |
+| **Financial & Business** | Funnel Area Analysis                      | 1694.0 ms | **61.7 ms**  | **27.5x** |
+| **Financial & Business** | KPI Performance Indicator                 | 1634.1 ms | **57.2 ms**  | **28.6x** |
+| **Hierarchical**         | Market Cap Treemap                        | 1625.4 ms | **52.6 ms**  | **30.9x** |
+| **Hierarchical**         | Global Sunburst Hierarchy                 | 1723.9 ms | **61.8 ms**  | **27.9x** |
+| **Hierarchical**         | Icicle Partition Chart                    | 1594.7 ms | **50.2 ms**  | **31.7x** |
+| **Radial & Polar**       | Radar Performance Comparison              | 2481.9 ms | **96.5 ms**  | **25.7x** |
+| **Radial & Polar**       | Polar Wind Rose                           | 1826.6 ms | **77.5 ms**  | **23.6x** |
+| **Specialized Diagrams** | Energy Flow Sankey Diagram                | 1708.4 ms | **51.7 ms**  | **33.1x** |
+| **Specialized Diagrams** | Parallel Categories Diagram               | 1620.2 ms | **57.0 ms**  | **28.4x** |
+| **Specialized Diagrams** | Formatted Data Table                      | 1766.4 ms | **69.9 ms**  | **25.3x** |
+| **Specialized Diagrams** | Carpet Coordinate Plot                    | 1792.2 ms | **86.1 ms**  | **20.8x** |
+| **Layout edge cases**    | Bar chart with X labels at 45 deg         | 1673.2 ms | **89.0 ms**  | **18.8x** |
+| **Layout edge cases**    | Bar chart with X labels at 90 deg         | 1883.9 ms | **87.7 ms**  | **21.5x** |
+| **Layout edge cases**    | Annotation arrowheads (incl. circle)      | 1661.6 ms | **82.4 ms**  | **20.2x** |
+| **Layout edge cases**    | Long annotation arrows (dasharray length) | 1719.1 ms | **79.7 ms**  | **21.6x** |
+| **Layout edge cases**    | Table cells with HTML markup and entities | 1692.5 ms | **74.8 ms**  | **22.6x** |
 
 ## Visual comparisons
 
@@ -97,131 +98,135 @@ Side-by-side PNGs (Kaleido left, plotly-print right):
 
 ### Core Cartesian
 
-#### Scatter & Line Chart (plotly-print: 99.5ms | Kaleido: 1732.3ms)
+#### Scatter & Line Chart (plotly-print: 88.2ms | Kaleido: 1668.5ms)
 
 ![Scatter & Line Chart](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_scatter_line.png)
 
-#### Grouped Bar Chart (plotly-print: 95.9ms | Kaleido: 1662.3ms)
+#### Grouped Bar Chart (plotly-print: 81.3ms | Kaleido: 1758.1ms)
 
 ![Grouped Bar Chart](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_bar.png)
 
-#### Donut / Pie Chart (plotly-print: 74.7ms | Kaleido: 1664.5ms)
+#### Donut / Pie Chart (plotly-print: 73.6ms | Kaleido: 1628.6ms)
 
 ![Donut / Pie Chart](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_pie.png)
 
-#### Box Plot (plotly-print: 93.1ms | Kaleido: 1893.0ms)
+#### Box Plot (plotly-print: 77.1ms | Kaleido: 1748.2ms)
 
 ![Box Plot](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_box.png)
 
-#### Violin Plot (plotly-print: 99.2ms | Kaleido: 2504.6ms)
+#### Violin Plot (plotly-print: 84.1ms | Kaleido: 1623.8ms)
 
 ![Violin Plot](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_violin.png)
 
-#### Frequency Histogram (plotly-print: 78.6ms | Kaleido: 1695.0ms)
+#### Frequency Histogram (plotly-print: 62.7ms | Kaleido: 1878.0ms)
 
 ![Frequency Histogram](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_histogram.png)
 
-#### 2D Density Histogram (plotly-print: 98.8ms | Kaleido: 2136.3ms)
+#### 2D Density Histogram (plotly-print: 98.8ms | Kaleido: 1949.4ms)
 
 ![2D Density Histogram](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_histogram2d.png)
 
-#### 2D Contour Plot (plotly-print: 132.2ms | Kaleido: 1630.0ms)
+#### 2D Contour Plot (plotly-print: 118.7ms | Kaleido: 1604.9ms)
 
 ![2D Contour Plot](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_contour.png)
 
-#### Performance Heatmap (plotly-print: 87.6ms | Kaleido: 6032.4ms)
+#### Performance Heatmap (plotly-print: 87.3ms | Kaleido: 1832.4ms)
 
 ![Performance Heatmap](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_heatmap.png)
 
-#### Ternary Phase Diagram (plotly-print: 97.9ms | Kaleido: 8172.7ms)
+#### Ternary Phase Diagram (plotly-print: 84.9ms | Kaleido: 1724.9ms)
 
 ![Ternary Phase Diagram](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_scatterternary.png)
 
 ### Financial & Business
 
-#### Candlestick Stock Chart (plotly-print: 179.8ms | Kaleido: 1988.8ms)
+#### Candlestick Stock Chart (plotly-print: 140.5ms | Kaleido: 1741.1ms)
 
 ![Candlestick Stock Chart](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_candlestick.png)
 
-#### OHLC Financial Chart (plotly-print: 131.4ms | Kaleido: 1814.0ms)
+#### OHLC Financial Chart (plotly-print: 131.3ms | Kaleido: 1670.0ms)
 
 ![OHLC Financial Chart](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_ohlc.png)
 
-#### Waterfall Profit & Loss (plotly-print: 67.0ms | Kaleido: 1907.6ms)
+#### Waterfall Profit & Loss (plotly-print: 64.7ms | Kaleido: 1793.0ms)
 
 ![Waterfall Profit & Loss](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_waterfall.png)
 
-#### Sales Conversion Funnel (plotly-print: 104.0ms | Kaleido: 1914.4ms)
+#### Sales Conversion Funnel (plotly-print: 91.1ms | Kaleido: 1629.9ms)
 
 ![Sales Conversion Funnel](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_funnel.png)
 
-#### Funnel Area Analysis (plotly-print: 69.7ms | Kaleido: 1658.5ms)
+#### Funnel Area Analysis (plotly-print: 61.7ms | Kaleido: 1694.0ms)
 
 ![Funnel Area Analysis](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_funnelarea.png)
 
-#### KPI Performance Indicator (plotly-print: 58.6ms | Kaleido: 1541.5ms)
+#### KPI Performance Indicator (plotly-print: 57.2ms | Kaleido: 1634.1ms)
 
 ![KPI Performance Indicator](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_indicator.png)
 
 ### Hierarchical
 
-#### Market Cap Treemap (plotly-print: 64.9ms | Kaleido: 1625.0ms)
+#### Market Cap Treemap (plotly-print: 52.6ms | Kaleido: 1625.4ms)
 
 ![Market Cap Treemap](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_treemap.png)
 
-#### Global Sunburst Hierarchy (plotly-print: 55.9ms | Kaleido: 1698.7ms)
+#### Global Sunburst Hierarchy (plotly-print: 61.8ms | Kaleido: 1723.9ms)
 
 ![Global Sunburst Hierarchy](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_sunburst.png)
 
-#### Icicle Partition Chart (plotly-print: 59.2ms | Kaleido: 1517.1ms)
+#### Icicle Partition Chart (plotly-print: 50.2ms | Kaleido: 1594.7ms)
 
 ![Icicle Partition Chart](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_icicle.png)
 
 ### Radial & Polar
 
-#### Radar Performance Comparison (plotly-print: 124.3ms | Kaleido: 1667.7ms)
+#### Radar Performance Comparison (plotly-print: 96.5ms | Kaleido: 2481.9ms)
 
 ![Radar Performance Comparison](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_scatterpolar.png)
 
-#### Polar Wind Rose (plotly-print: 81.7ms | Kaleido: 1785.0ms)
+#### Polar Wind Rose (plotly-print: 77.5ms | Kaleido: 1826.6ms)
 
 ![Polar Wind Rose](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_barpolar.png)
 
 ### Specialized Diagrams
 
-#### Energy Flow Sankey Diagram (plotly-print: 63.6ms | Kaleido: 1714.3ms)
+#### Energy Flow Sankey Diagram (plotly-print: 51.7ms | Kaleido: 1708.4ms)
 
 ![Energy Flow Sankey Diagram](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_sankey.png)
 
-#### Parallel Categories Diagram (plotly-print: 66.5ms | Kaleido: 1661.2ms)
+#### Parallel Categories Diagram (plotly-print: 57.0ms | Kaleido: 1620.2ms)
 
 ![Parallel Categories Diagram](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_parcats.png)
 
-#### Formatted Data Table (plotly-print: 78.3ms | Kaleido: 1819.0ms)
+#### Formatted Data Table (plotly-print: 69.9ms | Kaleido: 1766.4ms)
 
 ![Formatted Data Table](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_table.png)
 
-#### Carpet Coordinate Plot (plotly-print: 119.2ms | Kaleido: 1710.2ms)
+#### Carpet Coordinate Plot (plotly-print: 86.1ms | Kaleido: 1792.2ms)
 
 ![Carpet Coordinate Plot](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_carpet.png)
 
 ### Layout edge cases
 
-#### Bar chart with X labels at 45 deg (plotly-print: 110.8ms | Kaleido: 1804.5ms)
+#### Bar chart with X labels at 45 deg (plotly-print: 89.0ms | Kaleido: 1673.2ms)
 
 ![Bar chart with X labels at 45 deg](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_rotated_ticks_45.png)
 
-#### Bar chart with X labels at 90 deg (plotly-print: 127.6ms | Kaleido: 1886.6ms)
+#### Bar chart with X labels at 90 deg (plotly-print: 87.7ms | Kaleido: 1883.9ms)
 
 ![Bar chart with X labels at 90 deg](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_rotated_ticks_90.png)
 
-#### Annotation arrowheads (incl. circle) (plotly-print: 101.9ms | Kaleido: 1657.9ms)
+#### Annotation arrowheads (incl. circle) (plotly-print: 82.4ms | Kaleido: 1661.6ms)
 
 ![Annotation arrowheads (incl. circle)](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_annotations_arrowheads.png)
 
-#### Long annotation arrows (dasharray length) (plotly-print: 98.6ms | Kaleido: 1803.9ms)
+#### Long annotation arrows (dasharray length) (plotly-print: 79.7ms | Kaleido: 1719.1ms)
 
 ![Long annotation arrows (dasharray length)](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_annotations_long_arrows.png)
+
+#### Table cells with HTML markup and entities (plotly-print: 74.8ms | Kaleido: 1692.5ms)
+
+![Table cells with HTML markup and entities](https://raw.githubusercontent.com/roman-kaczanowski/plotly-print/main/assets/benchmarks/compare_table_markup.png)
 
 <!-- BENCHMARK-END -->
 
