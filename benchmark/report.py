@@ -29,13 +29,13 @@ def build_readme_section(results: list[dict[str, object]]) -> str:
         'See the [raw results](assets/benchmarks/benchmark_summary.json) or '
         '[run the benchmark locally](CONTRIBUTING.md#kaleido-visual-benchmark).',
         '',
-        '| Category | Chart Type | plotly-print | Kaleido | Speedup |',
+        '| Category | Chart Type | Kaleido | plotly-print | Speedup |',
         '| :--- | :--- | :---: | :---: | :---: |',
     ]
     for row in results:
         lines.append(
             f'| **{row["category"]}** | {row["title"]} | '
-            f'**{row["plotly_print_ms"]:.1f} ms** | {row["kaleido_ms"]:.1f} ms | '
+            f'{row["kaleido_ms"]:.1f} ms | **{row["plotly_print_ms"]:.1f} ms** | '
             f'**{row["speedup"]:.1f}x** |'
         )
     lines.extend(
