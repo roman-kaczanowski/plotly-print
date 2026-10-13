@@ -439,4 +439,29 @@ CHARTS = {
             ),
         ),
     },
+    'table_markup': {
+        'category': 'Layout edge cases',
+        'title': 'Table cells with HTML markup and entities',
+        'fig': go.Figure(
+            data=[
+                go.Table(
+                    header=dict(
+                        values=['Tag', 'Comparison', 'Note'],
+                        fill_color='paleturquoise',
+                        align='left',
+                    ),
+                    cells=dict(
+                        values=[
+                            ['<br>', '<b>bold</b>', 'a & b'],
+                            ['x < y', 'x > y', 'a && b'],
+                            ['line<br>break', 'A & B > C', 'plain'],
+                        ],
+                        fill_color='lavender',
+                        align='left',
+                    ),
+                )
+            ],
+            layout=go.Layout(title='Table Markup / Entities', width=650, height=450),
+        ),
+    },
 }
