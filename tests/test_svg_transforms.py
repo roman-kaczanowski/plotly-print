@@ -38,6 +38,31 @@ def _plot_margins(svg: str, width: float = 500, height: float = 400) -> dict[str
     raise AssertionError('plot background rect not found')
 
 
+def test_transform_base_val_consolidate():
+    """Plotly tables call el.transform.baseVal.consolidate().matrix."""
+    ctx = _micro_dom_context()
+    raw = ctx.eval(
+        r"""
+        (function() {
+            var NS = 'http://www.w3.org/2000/svg';
+            var g = document.createElementNS(NS, 'g');
+            var empty = g.transform.baseVal.consolidate();
+            g.setAttribute('transform', 'translate(10, 20) rotate(90)');
+            var c = g.transform.baseVal.consolidate();
+            var m = c ? c.matrix : null;
+            return JSON.stringify({
+                empty: empty,
+                matrix: m ? [m.a, m.b, m.c, m.d, m.e, m.f] : null
+            });
+        })()
+        """
+    )
+    data = json.loads(raw)
+    assert data['empty'] is None
+    # translate(10,20) rotate(90) -> a=0,b=1,c=-1,d=0,e=10,f=20
+    assert data['matrix'] == pytest.approx([0, 1, -1, 0, 10, 20], abs=1e-9)
+
+
 def test_get_bbox_applies_child_rotate():
     ctx = _micro_dom_context()
     raw = ctx.eval(
@@ -133,8 +158,8 @@ def test_transform_order_and_rotate_around_point():
         """
     )
     data = json.loads(raw)
-    # SVG post-multiplies left→right, so rotate applies before translate:
-    # translate(100,0) rotate(90) → bbox near x=100.
+    # SVG post-multiplies left->right, so rotate applies before translate:
+    # translate(100,0) rotate(90) -> bbox near x=100.
     assert data['translateThenRotate']['x'] == pytest.approx(100, abs=10)
     assert abs(data['translateThenRotate']['y']) < 20
     # matrix(1,0,0,1,15,25) is a pure translate
@@ -146,6 +171,25 @@ def test_transform_order_and_rotate_around_point():
     # rotate(90, 10, 20) moves the unrotated origin into the neighborhood of the pivot
     assert data['rotateAround']['x'] == pytest.approx(26, abs=5)
     assert data['rotateAround']['y'] == pytest.approx(10, abs=5)
+
+
+@pytest.mark.parametrize(
+    'values',
+    [
+        [['short'], ['plain']],
+        [['line<br>break'], ['a & b']],
+        [['This is a very long cell value that wraps in a narrow column']],
+    ],
+)
+def test_table_renders_wrapped_and_markup_text(values):
+    """Tables with wrap / HTML entities need transform.baseVal.consolidate."""
+    fig = go.Figure(
+        data=[go.Table(header=dict(values=['Col']), cells=dict(values=values))],
+        layout=go.Layout(width=300, height=250),
+    )
+    svg = plotly_print.to_svg(fig)
+    assert '<svg' in svg
+    assert len(svg) > 100
 
 
 @pytest.mark.parametrize('tickangle', [45, 90, -90])

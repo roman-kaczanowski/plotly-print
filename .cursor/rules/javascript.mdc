@@ -1,0 +1,33 @@
+---
+description: QuickJS micro-DOM and first-party JS (not the vendored Plotly bundle)
+globs: "src/plotly_print/js/**/*.js"
+alwaysApply: false
+---
+
+# JavaScript (QuickJS)
+
+First-party runtime JS lives under `src/plotly_print/js/`. It runs inside QuickJS via `plotly_print.engine`, not in Node or a browser.
+
+## Do not edit
+
+- `plotly_comprehensive_2d.js` and any other vendored Plotly/plotly.js bundle. Treat as opaque third-party input.
+- Only change first-party files such as `micro_dom.js`.
+
+## Style (match `micro_dom.js`)
+
+- IIFE + `'use strict'`. No ES modules, `import`/`export`, or build step.
+- Prefer ES5 that QuickJS already accepts here: `var`, `function`, prototypes. Use newer features only when the file already does (e.g. `Proxy` with a fallback).
+- 4-space indent. ASCII only in identifiers and comments (no emojis, arrows, smart dashes).
+- No TypeScript. No Prettier/ESLint in this repo; match existing formatting by eye.
+- Same comment rules as the rest of the project: why not what; `ponytail:` for deliberate ceilings.
+
+## DOM / SVG stubs
+
+- Implement the minimum Plotly/d3 actually call. Prefer attribute-backed getters (e.g. `transform` from `getAttribute('transform')`) over inventing full SVG DOM types.
+- When adding a browser API stub, grep the Plotly bundle for the call shape (`baseVal.consolidate`, etc.) and return what that path reads.
+- Keep geometry helpers (`parseTransform`, path flatten, bbox) shared; do not duplicate matrix math per method.
+
+## Tests
+
+- JS has no separate test runner. Cover behavior from Python with `quickjs.Context` loading `micro_dom.js` (see `tests/test_svg_*.py`), or via `plotly_print.to_svg` / figure fixtures when the bug is Plotly-facing.
+- After non-trivial micro-DOM changes, run the relevant `tests/test_svg_*.py` (or the smallest Plotly render check that would fail).
