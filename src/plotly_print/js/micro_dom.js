@@ -42,9 +42,8 @@
     };
 
     // Style proxy or property reflection
-    function createStyle(element) {
+    function createStyle() {
         var decl = new CSSStyleDeclaration();
-        decl._element = element;
         // Return a proxy if available, else plain decl with getters/setters for common props
         if (typeof Proxy !== 'undefined') {
             return new Proxy(decl, {
@@ -241,7 +240,7 @@
             this.nodeName = this.tagName;
         }
         this._attributes = {};
-        this.style = createStyle(this);
+        this.style = createStyle();
         this.classList = new ClassList(this);
         this._eventListeners = {};
 
@@ -529,10 +528,10 @@
 
     // --- Geometry & Font Measurement ---
     Element.prototype.getCTM = function() {
-        return { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+        return identityMatrix();
     };
     Element.prototype.getScreenCTM = function() {
-        return { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+        return identityMatrix();
     };
 
     function identityMatrix() {
@@ -633,16 +632,7 @@
             if (p.x > maxX) maxX = p.x;
             if (p.y > maxY) maxY = p.y;
         }
-        return {
-            x: minX,
-            y: minY,
-            width: maxX - minX,
-            height: maxY - minY,
-            left: minX,
-            top: minY,
-            right: maxX,
-            bottom: maxY
-        };
+        return makeBBox(minX, minY, maxX - minX, maxY - minY);
     }
 
     function getTextAnchor(node) {
@@ -668,11 +658,42 @@
         };
     }
 
+    function measureText(text, fontFamily, fontSize, fontWeight) {
+        var w = 0, h = fontSize * 1.2, a = fontSize * 0.8, d = fontSize * 0.2;
+        if (typeof globalScope._measureTextRaw === 'function') {
+            try {
+                var raw = globalScope._measureTextRaw(text, fontFamily, String(fontSize), fontWeight);
+                var parts = raw.split(',');
+                w = parseFloat(parts[0]) || 0;
+                h = parseFloat(parts[1]) || (fontSize * 1.2);
+                a = parseFloat(parts[2]) || (fontSize * 0.8);
+                d = parseFloat(parts[3]) || (fontSize * 0.2);
+            } catch (e) {
+                w = text.length * fontSize * 0.6;
+            }
+        } else {
+            w = text.length * fontSize * 0.6;
+        }
+        return { width: w, height: h, ascent: a, descent: d };
+    }
+
+    function textBBox(x, y, width, height, ascent, anchor) {
+        var minX;
+        if (anchor === 'middle') {
+            minX = x - width / 2;
+        } else if (anchor === 'end') {
+            minX = x - width;
+        } else {
+            minX = x;
+        }
+        return makeBBox(minX, y - ascent, width, height);
+    }
+
     // ponytail: O(n) flatten with fixed 24 samples/curve — enough for arrow
     // heads and layout; upgrade to adaptive subdivision if length accuracy matters.
     var PATH_CURVE_SAMPLES = 24;
 
-    function dist2(a, b) {
+    function distance(a, b) {
         var dx = b.x - a.x;
         var dy = b.y - a.y;
         return Math.sqrt(dx * dx + dy * dy);
@@ -1075,7 +1096,7 @@
         for (var s = 0; s < subpaths.length; s++) {
             var pts = subpaths[s];
             for (var i = 1; i < pts.length; i++) {
-                total += dist2(pts[i - 1], pts[i]);
+                total += distance(pts[i - 1], pts[i]);
             }
         }
         return total;
@@ -1101,7 +1122,7 @@
         for (var s = 0; s < subpaths.length; s++) {
             var pts = subpaths[s];
             for (var i = 1; i < pts.length; i++) {
-                var segLen = dist2(pts[i - 1], pts[i]);
+                var segLen = distance(pts[i - 1], pts[i]);
                 if (remaining <= segLen) {
                     var t = segLen === 0 ? 0 : remaining / segLen;
                     return lerpPoint(pts[i - 1], pts[i], t);
@@ -1222,52 +1243,16 @@
                         curY += dyVal;
                     }
 
-                    var tw = 0, th = tFontSize * 1.2, ta = tFontSize * 0.8;
-                    if (typeof globalScope._measureTextRaw === 'function') {
-                        try {
-                            var raw = globalScope._measureTextRaw(tText, tFontFamily, String(tFontSize), tFontWeight);
-                            var parts = raw.split(',');
-                            tw = parseFloat(parts[0]) || 0;
-                            th = parseFloat(parts[1]) || (tFontSize * 1.2);
-                            ta = parseFloat(parts[2]) || (tFontSize * 0.8);
-                        } catch(e) {
-                            tw = tText.length * tFontSize * 0.6;
-                        }
-                    } else {
-                        tw = tText.length * tFontSize * 0.6;
-                    }
-
-                    var tMinX;
-                    if (tAnchor === 'middle') {
-                        tMinX = tx - tw / 2;
-                    } else if (tAnchor === 'end') {
-                        tMinX = tx - tw;
-                    } else {
-                        tMinX = tx;
-                    }
-                    var tMaxX = tMinX + tw;
-                    var tMinY = curY - ta;
-                    var tMaxY = tMinY + th;
-
-                    if (tMinX < minX) minX = tMinX;
-                    if (tMinY < minY) minY = tMinY;
-                    if (tMaxX > maxX) maxX = tMaxX;
-                    if (tMaxY > maxY) maxY = tMaxY;
+                    var tm = measureText(tText, tFontFamily, tFontSize, tFontWeight);
+                    var tbb = textBBox(tx, curY, tm.width, tm.height, tm.ascent, tAnchor);
+                    if (tbb.x < minX) minX = tbb.x;
+                    if (tbb.y < minY) minY = tbb.y;
+                    if (tbb.right > maxX) maxX = tbb.right;
+                    if (tbb.bottom > maxY) maxY = tbb.bottom;
                 }
 
                 if (minX !== Infinity) {
-                    var w = maxX - minX;
-                    var h = maxY - minY;
-                    return {
-                        x: minX,
-                        y: minY,
-                        width: w,
-                        height: h,
-                        left: minX,
-                        top: minY,
-                        right: maxX,
-                        bottom: maxY
-                    };
+                    return makeBBox(minX, minY, maxX - minX, maxY - minY);
                 }
             }
         }
@@ -1277,43 +1262,8 @@
             var fontSize = parseFloat(this.style.getPropertyValue('font-size') || this.getAttribute('font-size')) || 12;
             var fontFamily = this.style.getPropertyValue('font-family') || this.getAttribute('font-family') || 'sans-serif';
             var fontWeight = this.style.getPropertyValue('font-weight') || this.getAttribute('font-weight') || 'normal';
-            var anchor = getTextAnchor(this);
-
-            var w = 0, h = fontSize * 1.2, a = fontSize * 0.8, d = fontSize * 0.2;
-            if (typeof globalScope._measureTextRaw === 'function') {
-                try {
-                    var raw = globalScope._measureTextRaw(text, fontFamily, String(fontSize), fontWeight);
-                    var parts = raw.split(',');
-                    w = parseFloat(parts[0]) || 0;
-                    h = parseFloat(parts[1]) || (fontSize * 1.2);
-                    a = parseFloat(parts[2]) || (fontSize * 0.8);
-                    d = parseFloat(parts[3]) || (fontSize * 0.2);
-                } catch(e) {
-                    w = text.length * fontSize * 0.6;
-                }
-            } else {
-                w = text.length * fontSize * 0.6;
-            }
-
-            var minX;
-            if (anchor === 'middle') {
-                minX = x - w / 2;
-            } else if (anchor === 'end') {
-                minX = x - w;
-            } else {
-                minX = x;
-            }
-
-            return {
-                x: minX,
-                y: y - a,
-                width: w,
-                height: h,
-                left: minX,
-                top: y - a,
-                right: minX + w,
-                bottom: y - a + h
-            };
+            var m = measureText(text, fontFamily, fontSize, fontWeight);
+            return textBBox(x, y, m.width, m.height, m.ascent, getTextAnchor(this));
         }
 
         var shapeBB = shapeBBox(this, tag);
@@ -1343,18 +1293,9 @@
             }
         }
         if (!hasKids) {
-            return { x: 0, y: 0, width: 0, height: 0, left: 0, top: 0, right: 0, bottom: 0 };
+            return makeBBox(0, 0, 0, 0);
         }
-        return {
-            x: minX,
-            y: minY,
-            width: maxX - minX,
-            height: maxY - minY,
-            left: minX,
-            top: minY,
-            right: maxX,
-            bottom: maxY
-        };
+        return makeBBox(minX, minY, maxX - minX, maxY - minY);
     };
 
     Element.prototype.getBoundingClientRect = function() {
@@ -1401,7 +1342,7 @@
         }
         if (tag === 'line') {
             var ln = lineEndpoints(this);
-            return dist2({ x: ln.x1, y: ln.y1 }, { x: ln.x2, y: ln.y2 });
+            return distance({ x: ln.x1, y: ln.y1 }, { x: ln.x2, y: ln.y2 });
         }
         var bb = this.getBBox();
         var p = (bb.width + bb.height) * 2;
@@ -1417,7 +1358,7 @@
             var ln = lineEndpoints(this);
             var p0 = { x: ln.x1, y: ln.y1 };
             var p1 = { x: ln.x2, y: ln.y2 };
-            var total = dist2(p0, p1);
+            var total = distance(p0, p1);
             if (total <= 0) return { x: p0.x, y: p0.y };
             if (len <= 0) return { x: p0.x, y: p0.y };
             if (len >= total) return { x: p1.x, y: p1.y };
@@ -1605,7 +1546,6 @@
         this.body._ownerDoc = this;
         this.documentElement.appendChild(this.head);
         this.documentElement.appendChild(this.body);
-        this._elementsById = {};
     }
     Document.prototype = Object.create(Node.prototype);
 
