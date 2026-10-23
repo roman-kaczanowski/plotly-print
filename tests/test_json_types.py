@@ -2,6 +2,7 @@
 
 import datetime as dt
 import decimal
+import json
 
 import numpy as np
 import pandas as pd
@@ -9,6 +10,7 @@ import plotly.graph_objects as go
 import pytest
 
 import plotly_print
+from plotly_print.engine import _expand_typed_arrays
 
 
 @pytest.mark.parametrize(
@@ -133,6 +135,62 @@ def test_non_json_values_render(name, fig):
     assert '<svg' in svg
     png = plotly_print.to_image(fig, format='png')
     assert png.startswith(b'\x89PNG')
+
+
+def test_typed_array_specs_expand_to_plain_values():
+    x = np.array([1.5, -2.25], dtype=np.float64)
+    y = np.array([-1, 2, 3, 4], dtype=np.int8)
+    color = np.array([0.25, 0.5], dtype=np.float32)
+    size = np.array([10, 20], dtype=np.uint16)
+    z = np.arange(4, dtype=np.float64).reshape(2, 2)
+    fig = go.Figure(
+        data=[
+            go.Scatter(x=x, y=y, marker={'color': color, 'size': size}),
+            go.Heatmap(z=z),
+        ]
+    )
+
+    expanded = _expand_typed_arrays(fig.to_dict())
+
+    assert expanded['data'][0]['x'] == x.tolist()
+    assert expanded['data'][0]['y'] == y.tolist()
+    assert expanded['data'][0]['marker']['color'] == color.tolist()
+    assert expanded['data'][0]['marker']['size'] == size.tolist()
+    assert expanded['data'][1]['z'] == z.tolist()
+
+
+@pytest.mark.parametrize('source', ['figure', 'to_dict', 'json'])
+def test_padded_numpy_bdata_renders(source):
+    # 22 float64 values are 176 bytes, which is not a multiple of 3, so the
+    # base64 payload has padding that used to crash QuickJS.
+    values = np.arange(22, dtype=float)
+    fig = go.Figure(
+        data=[go.Scatter(x=values, y=values, mode='lines+markers')],
+        layout=go.Layout(width=400, height=300, title='Bdata'),
+    )
+    if source == 'to_dict':
+        fig = fig.to_dict()
+    elif source == 'json':
+        fig = json.loads(fig.to_json())
+
+    svg = plotly_print.to_svg(fig)
+    assert '<svg' in svg
+    assert 'Bdata' in svg
+    assert 'class="point"' in svg
+
+
+def test_padded_pandas_and_heatmap_render():
+    series = pd.Series(np.arange(22, dtype=float))
+    figures = [
+        go.Figure(data=[go.Scatter(x=series, y=series**2)], layout=go.Layout(width=400, height=300)),
+        go.Figure(
+            data=[go.Heatmap(z=np.arange(4, dtype=float).reshape(2, 2))], layout=go.Layout(width=400, height=300)
+        ),
+        go.Figure(data=[go.Bar(y=np.array([1, 2], dtype=np.int16))], layout=go.Layout(width=400, height=300)),
+    ]
+    for fig in figures:
+        svg = plotly_print.to_svg(fig)
+        assert '<svg' in svg
 
 
 def test_hooked_to_image_with_decimal_values():

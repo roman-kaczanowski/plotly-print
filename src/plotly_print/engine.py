@@ -4,6 +4,7 @@ import base64
 import io
 import json
 import re
+import struct
 import threading
 from pathlib import Path
 from typing import Any
@@ -67,6 +68,69 @@ def _encode_canvas_to_png(width: int, height: int, commands_json: str) -> str:
     img.save(buf, format='PNG')
     b64 = base64.b64encode(buf.getvalue()).decode('ascii')
     return f'data:image/png;base64,{b64}'
+
+
+# QuickJS throws on the out-of-bounds Uint8Array write plotly.js uses to drop
+# base64 padding when decoding {'dtype', 'bdata'}. Expand those specs to lists
+# before they reach the engine. Bytes are little-endian, matching the typed
+# arrays plotly.js builds on the hosts this package runs on.
+_TYPED_ARRAY_DTYPES = {
+    'i1': 'b',
+    'u1': 'B',
+    'i2': 'h',
+    'u2': 'H',
+    'i4': 'i',
+    'u4': 'I',
+    'f4': 'f',
+    'f8': 'd',
+}
+
+
+def _decode_typed_array(spec: dict[str, Any]) -> list[Any] | None:
+    dtype = spec.get('dtype')
+    bdata = spec.get('bdata')
+    if not isinstance(dtype, str) or not isinstance(bdata, str):
+        return None
+    code = _TYPED_ARRAY_DTYPES.get(dtype)
+    if code is None:
+        return None
+    shape = spec.get('shape')
+    if 'shape' in spec and not isinstance(shape, (str, int)):
+        return None
+
+    raw = base64.b64decode(bdata)
+    width = struct.calcsize(code)
+    if len(raw) % width:
+        raise ValueError(f'typed array byte length {len(raw)} is not a multiple of {width} for dtype {dtype}')
+    flat = list(struct.unpack(f'<{len(raw) // width}{code}', raw))
+    if shape is None:
+        return flat
+    dims = [int(part) for part in str(shape).split(',') if part.strip()]
+    return _reshape_row_major(flat, dims)
+
+
+def _reshape_row_major(flat: list[Any], dims: list[int]) -> list[Any]:
+    size = 1
+    for dim in dims:
+        size *= dim
+    if size != len(flat):
+        joined = ','.join(str(dim) for dim in dims)
+        raise ValueError(f'typed array shape {joined} does not match {len(flat)} values')
+    if len(dims) <= 1:
+        return flat
+    span = size // dims[0]
+    return [_reshape_row_major(flat[index * span : (index + 1) * span], dims[1:]) for index in range(dims[0])]
+
+
+def _expand_typed_arrays(value: Any) -> Any:
+    if isinstance(value, dict):
+        decoded = _decode_typed_array(value)
+        if decoded is not None:
+            return decoded
+        return {key: _expand_typed_arrays(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_expand_typed_arrays(item) for item in value]
+    return value
 
 
 class PrintEngine:
@@ -155,8 +219,8 @@ class PrintEngine:
         if height is not None:
             layout_copy['height'] = height
 
-        data_json = json.dumps(data, cls=PlotlyJSONEncoder)
-        layout_json = json.dumps(layout_copy, cls=PlotlyJSONEncoder)
+        data_json = json.dumps(_expand_typed_arrays(data), cls=PlotlyJSONEncoder)
+        layout_json = json.dumps(_expand_typed_arrays(layout_copy), cls=PlotlyJSONEncoder)
 
         self.context.eval(f'var __plotly_print_data = {json.dumps(data_json)};')
         self.context.eval(f'var __plotly_print_layout = {json.dumps(layout_json)};')
