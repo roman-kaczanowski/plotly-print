@@ -1,0 +1,2 @@
+# Vendored Plotly.js (~2MB). Never index or open whole-file; capped rg via Shell if needed.
+src/plotly_print/js/plotly_comprehensive_2d.js
