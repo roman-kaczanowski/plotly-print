@@ -1,0 +1,34 @@
+---
+description: Package map — start here; avoid re-exploring the tree
+alwaysApply: true
+---
+
+# Package map
+
+Browser-less Plotly static export: QuickJS + micro-DOM + vendored Plotly 2D → SVG → resvg raster.
+
+## Flow
+
+`core.to_svg` / `to_image` / `write_image` → `engine.PrintEngine` (QuickJS) → eval `micro_dom.js` + vendored Plotly → SVG → `raster.py` for png/jpeg/webp.
+
+`plotly_hook.register` patches Plotly `to_image` / `write_image`.
+
+## Files
+
+| Path | Job |
+|------|-----|
+| `core.py` | Public API; figure → JSON |
+| `engine.py` | QuickJS lifecycle; canvas→PNG; typed arrays |
+| `fonts.py` | Text metrics callable into JS |
+| `raster.py` | SVG → raster (resvg) |
+| `plotly_hook.py` | Monkeypatch Plotly |
+| `js/micro_dom.js` | First-party DOM/SVG stubs (**edit here**) |
+| `js/plotly_comprehensive_2d.js` | Vendored; **never** Read/Grep whole file (`.cursorignore`) |
+
+Start from this map. Open only listed files unless the task is outside `src/plotly_print/`.
+
+## Tests / commands / scratch
+
+- `tests/test_svg_*.py` → micro-DOM; chart `test_*.py` → render; `test_kaleido_*` → visual parity
+- `poe format` | `poe test` | `poe benchmark` | `poe format_docs`
+- Scratch under `.artifacts/` (gitignored); do not commit

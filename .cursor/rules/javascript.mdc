@@ -10,7 +10,8 @@ First-party runtime JS lives under `src/plotly_print/js/`. It runs inside QuickJ
 
 ## Do not edit
 
-- `plotly_comprehensive_2d.js` and any other vendored Plotly/plotly.js bundle. Treat as opaque third-party input.
+- `plotly_comprehensive_2d.js` (and any vendored Plotly bundle): opaque; in `.cursorignore`. Do not Read/Grep the whole file.
+- Need a call shape: Shell `rg -n 'pattern' src/plotly_print/js/plotly_comprehensive_2d.js | head` (cap hits). Never open whole-file.
 - Only change first-party files such as `micro_dom.js`.
 
 ## Style (match `micro_dom.js`)

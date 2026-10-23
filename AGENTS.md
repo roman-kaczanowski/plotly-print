@@ -1,15 +1,17 @@
 # Agent instructions
 
-This project was generated from **cookiecutter-python-seed**, with first-party QuickJS JavaScript for Plotly static rendering.
+plotly-print: Python package + QuickJS micro-DOM for browser-less Plotly static export.
 
 ## Tooling
 
-- **All AI IDEs:** follow this file.
-- **Cursor:** project rules live in [`.cursor/rules/`](.cursor/rules/). This file is the index; do not duplicate those rules here.
+- **All AI IDEs:** start from this file and the package map.
+- **Cursor:** rules in [`.cursor/rules/`](.cursor/rules/). Do not duplicate them here.
 
-## Standards
+## Standards (Cursor)
 
-- Always-on: `.cursor/rules/global.mdc`
+- Map (always-on): `.cursor/rules/map.mdc`
+- Coding standards (always-on): `.cursor/rules/global.mdc`
 - JavaScript (`src/plotly_print/js/`): `.cursor/rules/javascript.mdc`
-- Markdown (`.md` files): `.cursor/rules/markdown.mdc`
-- Local scratch output: `.cursor/rules/artifacts.mdc`
+- Markdown (`.md`): `.cursor/rules/markdown.mdc`
+
+Vendored Plotly bundle is listed in `.cursorignore` — do not open it whole-file.
