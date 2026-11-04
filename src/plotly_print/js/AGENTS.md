@@ -1,17 +1,11 @@
----
-description: QuickJS micro-DOM and first-party JS (not the vendored Plotly bundle)
-globs: "src/plotly_print/js/**/*.js"
-alwaysApply: false
----
-
 # JavaScript (QuickJS)
 
 First-party runtime JS lives under `src/plotly_print/js/`. It runs inside QuickJS via `plotly_print.engine`, not in Node or a browser.
 
 ## Do not edit
 
-- `plotly_comprehensive_2d.js` (and any vendored Plotly bundle): opaque; in `.cursorignore`. Do not Read/Grep the whole file.
-- Need a call shape: Shell `rg -n 'pattern' src/plotly_print/js/plotly_comprehensive_2d.js | head` (cap hits). Never open whole-file.
+- `plotly_comprehensive_2d.js` (and any vendored Plotly bundle): opaque; do not read or grep the whole file.
+- Need a call shape: shell `grep -o 'pattern' src/plotly_print/js/plotly_comprehensive_2d.js | head` (cap hits). Never open whole-file.
 - Only change first-party files such as `micro_dom.js`.
 
 ## Style (match `micro_dom.js`)

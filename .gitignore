@@ -21,3 +21,16 @@ wheels/
 *.egg-info/
 
 .artifacts/
+
+# Platform-specific agent config, kept local by each maintainer.
+.cursor/
+.cursorignore
+.cursorrules
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.codex/
+AGENTS.override.md
+.opencode/
+opencode.json
+opencode.jsonc

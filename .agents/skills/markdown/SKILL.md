@@ -1,7 +1,8 @@
 ---
-description: Markdown formatting for README, docs, and other .md files
-globs: "**/*.md"
-alwaysApply: false
+name: markdown
+description: Markdown formatting standards for plotly-print. Use when creating or editing Markdown files.
+paths:
+  - "**/*.md"
 ---
 
 # Markdown
@@ -13,7 +14,7 @@ Use fenced code blocks with a language tag when the snippet has a language:
 ```python
 from pathlib import Path
 
-Path("data") / "out.csv"
+Path('data') / 'out.csv'
 ```
 
 Do not leave unlabeled fences for Python, TOML, shell, or JSON. Plain fences are fine for output or prose examples with no language.
