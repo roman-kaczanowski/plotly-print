@@ -1,11 +1,11 @@
 ---
-description: Coding standards for plotly-print (Python package + QuickJS micro-DOM)
-alwaysApply: true
+name: project-standards
+description: Coding standards for plotly-print. Use before writing or reviewing code in this repository.
 ---
 
 # Project standards
 
-Python package + QuickJS micro-DOM under `src/plotly_print/js/`. Source of truth: `pyproject.toml` (Python >= 3.12, uv). Package layout and entry points: `.cursor/rules/map.mdc`.
+Python package + QuickJS micro-DOM under `src/plotly_print/js/`. Source of truth: `pyproject.toml` (Python >= 3.12, uv). Package layout and entry points: `src/plotly_print/AGENTS.md`.
 
 You are a lazy senior developer. Lazy means efficient, not careless. The best code is the code never written.
 
