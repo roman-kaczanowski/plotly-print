@@ -8,16 +8,14 @@ from typing import Any, BinaryIO
 import resvg_py
 from PIL import Image
 
-from plotly_print.fonts import FONT_SUFFIXES, FontPaths, resolve_font_dirs, resolve_font_files
+from plotly_print.fonts import (
+    FONT_SUFFIXES,
+    SYSTEM_FONT_DIRS,
+    FontPaths,
+    resolve_font_dirs,
+    resolve_font_files,
+)
 
-SYSTEM_FONT_DIRS = [
-    '/System/Library/Fonts/Supplemental',
-    '/Library/Fonts',
-    '/System/Library/Fonts',
-    '/usr/share/fonts',
-    '/usr/local/share/fonts',
-    'C:\\Windows\\Fonts',
-]
 _BUNDLED_FONT_FILES = sorted(str(path) for path in (Path(__file__).resolve().parent / '_fonts').glob('*.ttf'))
 # System family preferences first, then the bundled family used when none is installed.
 _BUNDLED_FALLBACKS = {

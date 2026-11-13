@@ -5,6 +5,7 @@ plotly-print: Python package + QuickJS micro-DOM for browser-less Plotly static 
 ## Context, loaded on demand
 
 - Package map and flow: `src/plotly_print/AGENTS.md` (auto-loaded there).
+- Fonts, weights, and fallback rules: `src/plotly_print/AGENTS.md` (Fonts section).
 - JS and micro-DOM rules: `src/plotly_print/js/AGENTS.md` (auto-loaded there).
 - Tests: `tests/AGENTS.md` (auto-loaded there).
 - Coding standards: skill `project-standards` (load before changing code).
