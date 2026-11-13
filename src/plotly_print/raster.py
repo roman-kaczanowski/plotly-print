@@ -3,10 +3,12 @@ from __future__ import annotations
 import io
 import re
 from pathlib import Path
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
 import resvg_py
 from PIL import Image
+
+from plotly_print.fonts import FONT_SUFFIXES, FontPaths, resolve_font_dirs, resolve_font_files
 
 SYSTEM_FONT_DIRS = [
     '/System/Library/Fonts/Supplemental',
@@ -14,8 +16,32 @@ SYSTEM_FONT_DIRS = [
     '/System/Library/Fonts',
     '/usr/share/fonts',
     '/usr/local/share/fonts',
+    'C:\\Windows\\Fonts',
 ]
-EXISTING_FONT_DIRS = [d for d in SYSTEM_FONT_DIRS if Path(d).is_dir()]
+_BUNDLED_FONT_FILES = sorted(str(path) for path in (Path(__file__).resolve().parent / '_fonts').glob('*.ttf'))
+# System family preferences first, then the bundled family used when none is installed.
+_BUNDLED_FALLBACKS = {
+    'sans_serif_family': (
+        ['Arial', 'Helvetica', 'DejaVu Sans', 'Liberation Sans', 'FreeSans'],
+        'DejaVu Sans',
+    ),
+    'serif_family': (['Times New Roman', 'Liberation Serif', 'DejaVu Serif'], 'DejaVu Serif'),
+    'monospace_family': (['Courier New', 'Liberation Mono', 'DejaVu Sans Mono'], 'DejaVu Sans Mono'),
+}
+
+
+def _discover_system_fonts() -> tuple[list[str], set[str]]:
+    dirs: list[str] = []
+    stems: set[str] = set()
+    for directory in SYSTEM_FONT_DIRS:
+        files = [path for path in Path(directory).rglob('*') if path.is_file() and path.suffix.lower() in FONT_SUFFIXES]
+        if files:
+            dirs.append(directory)
+            stems.update(re.sub(r'[^a-z0-9]', '', path.stem.lower()) for path in files)
+    return dirs, stems
+
+
+EXISTING_FONT_DIRS, _SYSTEM_FONT_STEMS = _discover_system_fonts()
 
 COMMON_FONT_NAMES = [
     'verdana',
@@ -31,6 +57,32 @@ COMMON_FONT_NAMES = [
 _SVG_ROOT_RE = re.compile(r'<svg\b[^>]*>', re.IGNORECASE)
 _ATTR_RE = re.compile(r'([^\s=]+)\s*=\s*("([^"]*)"|\'([^\']*)\')')
 _LENGTH_RE = re.compile(r'^([+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)\s*[a-z%]*$', re.IGNORECASE)
+
+
+def _resvg_font_options(font_files: FontPaths | None = None, font_dirs: FontPaths | None = None) -> dict[str, Any]:
+    options: dict[str, Any] = {}
+    dirs = resolve_font_dirs(font_dirs) + EXISTING_FONT_DIRS
+    if dirs:
+        options['font_dirs'] = dirs
+
+    bundled_files = resolve_font_files(font_files) + _BUNDLED_FONT_FILES
+    if not bundled_files:
+        return options
+    options['font_files'] = bundled_files
+    if not _BUNDLED_FONT_FILES:
+        return options
+
+    for option, (candidates, bundled) in _BUNDLED_FALLBACKS.items():
+        for candidate in candidates:
+            stem = re.sub(r'[^a-z0-9]', '', candidate.lower())
+            if any(system_stem.startswith(stem) for system_stem in _SYSTEM_FONT_STEMS):
+                options[option] = candidate
+                break
+        else:
+            options[option] = bundled
+    if not dirs:
+        options['font_family'] = _BUNDLED_FALLBACKS['sans_serif_family'][1]
+    return options
 
 
 def _normalize_svg_fonts(svg: str) -> str:
@@ -122,12 +174,12 @@ def svg_to_png(
     width: int | None = None,
     height: int | None = None,
     scale: float = 1.0,
+    font_files: FontPaths | None = None,
+    font_dirs: FontPaths | None = None,
 ) -> bytes:
     normalized_svg = _normalize_svg_fonts(svg)
     prepared = _prepare_svg_for_raster(normalized_svg, width=width, height=height, scale=scale)
-    if EXISTING_FONT_DIRS:
-        return resvg_py.svg_to_bytes(prepared, font_dirs=EXISTING_FONT_DIRS)
-    return resvg_py.svg_to_bytes(prepared)
+    return resvg_py.svg_to_bytes(prepared, **_resvg_font_options(font_files, font_dirs))
 
 
 def svg_to_jpeg(
@@ -136,8 +188,10 @@ def svg_to_jpeg(
     height: int | None = None,
     scale: float = 1.0,
     quality: int = 90,
+    font_files: FontPaths | None = None,
+    font_dirs: FontPaths | None = None,
 ) -> bytes:
-    png_bytes = svg_to_png(svg, width=width, height=height, scale=scale)
+    png_bytes = svg_to_png(svg, width=width, height=height, scale=scale, font_files=font_files, font_dirs=font_dirs)
     img = Image.open(io.BytesIO(png_bytes))
     if img.mode in ('RGBA', 'LA', 'P'):
         bg = Image.new('RGB', img.size, (255, 255, 255))
@@ -154,8 +208,10 @@ def svg_to_webp(
     height: int | None = None,
     scale: float = 1.0,
     quality: int = 90,
+    font_files: FontPaths | None = None,
+    font_dirs: FontPaths | None = None,
 ) -> bytes:
-    png_bytes = svg_to_png(svg, width=width, height=height, scale=scale)
+    png_bytes = svg_to_png(svg, width=width, height=height, scale=scale, font_files=font_files, font_dirs=font_dirs)
     img = Image.open(io.BytesIO(png_bytes))
     buf = io.BytesIO()
     img.save(buf, format='WEBP', quality=quality)
@@ -169,14 +225,16 @@ def write_raster(
     width: int | None = None,
     height: int | None = None,
     scale: float = 1.0,
+    font_files: FontPaths | None = None,
+    font_dirs: FontPaths | None = None,
 ) -> None:
     fmt = format.lower().strip()
     if fmt == 'png':
-        data = svg_to_png(svg, width=width, height=height, scale=scale)
+        data = svg_to_png(svg, width=width, height=height, scale=scale, font_files=font_files, font_dirs=font_dirs)
     elif fmt in ('jpg', 'jpeg'):
-        data = svg_to_jpeg(svg, width=width, height=height, scale=scale)
+        data = svg_to_jpeg(svg, width=width, height=height, scale=scale, font_files=font_files, font_dirs=font_dirs)
     elif fmt == 'webp':
-        data = svg_to_webp(svg, width=width, height=height, scale=scale)
+        data = svg_to_webp(svg, width=width, height=height, scale=scale, font_files=font_files, font_dirs=font_dirs)
     else:
         raise ValueError(f"Unsupported raster format: {format}. Supported: 'png', 'jpeg', 'webp'")
 

@@ -49,6 +49,25 @@ After registration, existing calls such as `fig.write_image("chart.png")` use pl
 
 plotly-print targets 2D static charts. The bundled Plotly.js build and its licenses are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
+## Fonts
+
+Figures keep the font families you set, including `layout.font.family` and any per-trace or per-element override. If a family is not installed, plotly-print uses a system font. With no system fonts, it falls back to the bundled DejaVu Sans, DejaVu Serif, and DejaVu Sans Mono. Licenses for those fonts are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+To use your own files, set the family on the figure and pass them with the export:
+
+```python
+fig.update_layout(font={'family': 'Inter'})
+
+plotly_print.write_image(
+    fig,
+    'chart.png',
+    font_files=['fonts/Inter-Regular.ttf'],
+    # or: font_dirs=['fonts'],
+)
+```
+
+`font_files` and `font_dirs` also work with `to_svg`, `to_image`, and with `fig.write_image` after `plotly_print.register()`.
+
 <!-- BENCHMARK-START -->
 
 ## Benchmarks

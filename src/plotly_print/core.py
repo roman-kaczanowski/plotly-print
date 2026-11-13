@@ -4,6 +4,7 @@ import os
 from typing import Any, BinaryIO
 
 from plotly_print.engine import get_engine
+from plotly_print.fonts import FontPaths, resolve_font_dirs, resolve_font_files
 from plotly_print.raster import svg_to_jpeg, svg_to_png, svg_to_webp, write_raster
 
 
@@ -22,9 +23,11 @@ def to_svg(
     fig: Any,
     width: int | None = None,
     height: int | None = None,
+    font_files: FontPaths | None = None,
+    font_dirs: FontPaths | None = None,
 ) -> str:
     data, layout = _extract_figure_spec(fig)
-    return get_engine().render_svg(data, layout, width=width, height=height)
+    return get_engine().render_svg(data, layout, width=width, height=height, font_files=font_files, font_dirs=font_dirs)
 
 
 def to_image(
@@ -33,18 +36,22 @@ def to_image(
     width: int | None = None,
     height: int | None = None,
     scale: float = 1.0,
+    font_files: FontPaths | None = None,
+    font_dirs: FontPaths | None = None,
 ) -> bytes:
     fmt = format.lower().strip()
-    svg = to_svg(fig, width=width, height=height)
+    font_files = resolve_font_files(font_files) or None
+    font_dirs = resolve_font_dirs(font_dirs) or None
+    svg = to_svg(fig, width=width, height=height, font_files=font_files, font_dirs=font_dirs)
 
     if fmt == 'svg':
         return svg.encode('utf-8')
     if fmt == 'png':
-        return svg_to_png(svg, width=width, height=height, scale=scale)
+        return svg_to_png(svg, width=width, height=height, scale=scale, font_files=font_files, font_dirs=font_dirs)
     if fmt in ('jpg', 'jpeg'):
-        return svg_to_jpeg(svg, width=width, height=height, scale=scale)
+        return svg_to_jpeg(svg, width=width, height=height, scale=scale, font_files=font_files, font_dirs=font_dirs)
     if fmt == 'webp':
-        return svg_to_webp(svg, width=width, height=height, scale=scale)
+        return svg_to_webp(svg, width=width, height=height, scale=scale, font_files=font_files, font_dirs=font_dirs)
     raise ValueError(f"Unsupported format: {format}. Supported: 'svg', 'png', 'jpeg', 'webp'")
 
 
@@ -55,6 +62,8 @@ def write_image(
     scale: float = 1.0,
     width: int | None = None,
     height: int | None = None,
+    font_files: FontPaths | None = None,
+    font_dirs: FontPaths | None = None,
 ) -> None:
     if format is None:
         if isinstance(file, (str, os.PathLike)):
@@ -64,7 +73,9 @@ def write_image(
             format = 'png'
 
     fmt = format.lower().strip()
-    svg_str = to_svg(fig, width=width, height=height)
+    font_files = resolve_font_files(font_files) or None
+    font_dirs = resolve_font_dirs(font_dirs) or None
+    svg_str = to_svg(fig, width=width, height=height, font_files=font_files, font_dirs=font_dirs)
     if fmt == 'svg':
         if isinstance(file, (str, os.PathLike)):
             with open(file, 'w', encoding='utf-8') as f:
@@ -73,4 +84,13 @@ def write_image(
             file.write(svg_str.encode('utf-8'))
         return
 
-    write_raster(svg_str, file, format=fmt, width=width, height=height, scale=scale)
+    write_raster(
+        svg_str,
+        file,
+        format=fmt,
+        width=width,
+        height=height,
+        scale=scale,
+        font_files=font_files,
+        font_dirs=font_dirs,
+    )
