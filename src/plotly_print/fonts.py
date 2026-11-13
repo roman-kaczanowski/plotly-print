@@ -1,8 +1,59 @@
 from __future__ import annotations
 
+import os
+import re
+from collections.abc import Iterable
 from pathlib import Path
 
 from PIL import ImageFont
+
+type FontPaths = Iterable[str | os.PathLike[str]] | str | os.PathLike[str]
+
+FONT_SUFFIXES = ('.ttf', '.otf', '.ttc', '.otc')
+
+_FONT_DIR = Path(__file__).resolve().parent / '_fonts'
+BUNDLED_FONTS = sorted(
+    (str(path) for path in _FONT_DIR.glob('*.ttf')),
+    key=lambda path: ('bold' in Path(path).stem.lower(), path),
+)
+
+
+def _as_paths(paths: FontPaths | None) -> list[Path]:
+    if paths is None:
+        return []
+    if isinstance(paths, (str, os.PathLike)):
+        paths = [paths]
+    return [Path(path) for path in paths]
+
+
+def resolve_font_files(font_files: FontPaths | None = None) -> list[str]:
+    paths = _as_paths(font_files)
+    for path in paths:
+        if not path.is_file():
+            raise FileNotFoundError(f'Font file not found: {path}')
+        try:
+            ImageFont.truetype(str(path), 12)
+        except OSError as exc:
+            raise ValueError(f'Unsupported font file: {path}') from exc
+    return [str(path) for path in paths]
+
+
+def resolve_font_dirs(font_dirs: FontPaths | None = None) -> list[str]:
+    paths = _as_paths(font_dirs)
+    for path in paths:
+        if not path.is_dir():
+            raise NotADirectoryError(f'Font directory not found: {path}')
+    return [str(path) for path in paths]
+
+
+def expand_font_dirs(font_dirs: FontPaths | None = None) -> list[str]:
+    return sorted(
+        str(path)
+        for directory in resolve_font_dirs(font_dirs)
+        for path in Path(directory).rglob('*')
+        if path.is_file() and path.suffix.lower() in FONT_SUFFIXES
+    )
+
 
 CANDIDATE_FONTS = [
     '/System/Library/Fonts/Supplemental/Arial.ttf',
@@ -18,17 +69,23 @@ CANDIDATE_FONTS = [
 ]
 
 
+def _font_key(name: str) -> str:
+    return re.sub(r'[^a-z0-9]', '', name.lower())
+
+
 class FontManager:
-    def __init__(self) -> None:
+    def __init__(self, font_files: FontPaths | None = None, font_dirs: FontPaths | None = None) -> None:
         self._font_cache: dict[tuple[str, int, str], ImageFont.FreeTypeFont | ImageFont.ImageFont] = {}
         self._measurement_cache: dict[tuple[str, str, int, str], tuple[float, float, float, float]] = {}
-        self._default_system_font_path = self._find_first_available_font()
-
-    def _find_first_available_font(self) -> str | None:
-        for path in CANDIDATE_FONTS:
-            if Path(path).exists():
-                return path
-        return None
+        system_fonts = [path for path in CANDIDATE_FONTS if Path(path).exists()]
+        explicit_fonts = resolve_font_files(font_files)
+        custom_fonts = list(dict.fromkeys(explicit_fonts + expand_font_dirs(font_dirs)))
+        self._font_paths = system_fonts + BUNDLED_FONTS + custom_fonts
+        self._default_font_path = system_fonts[0] if system_fonts else BUNDLED_FONTS[0] if BUNDLED_FONTS else None
+        self._custom_font_families: dict[str, str] = {}
+        for path in sorted(explicit_fonts, key=lambda item: ('bold' in Path(item).stem.lower(), item)):
+            family = ImageFont.truetype(path, 12).getname()[0]
+            self._custom_font_families.setdefault(_font_key(family), path)
 
     def get_font(self, family: str, size: float, weight: str = '') -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
         int_size = max(1, round(size))
@@ -47,6 +104,11 @@ class FontManager:
             if not clean_name or clean_name in ('sans-serif', 'serif', 'monospace'):
                 continue
 
+            custom_font = self._custom_font_families.get(_font_key(clean_name))
+            if custom_font:
+                font = ImageFont.truetype(custom_font, size=int_size)
+                break
+
             for test_name in (clean_name.title(), clean_name.capitalize(), clean_name):
                 try:
                     font = ImageFont.truetype(test_name, size=int_size)
@@ -57,9 +119,9 @@ class FontManager:
             if font:
                 break
 
-            for font_path in CANDIDATE_FONTS:
-                base = Path(font_path).name.lower()
-                if base.startswith(clean_name) and Path(font_path).exists():
+            target = _font_key(clean_name)
+            for font_path in self._font_paths:
+                if target and _font_key(Path(font_path).stem).startswith(target):
                     try:
                         font = ImageFont.truetype(font_path, size=int_size)
                         if font:
@@ -69,9 +131,9 @@ class FontManager:
             if font:
                 break
 
-        if font is None and self._default_system_font_path:
+        if font is None and self._default_font_path:
             try:
-                font = ImageFont.truetype(self._default_system_font_path, size=int_size)
+                font = ImageFont.truetype(self._default_font_path, size=int_size)
             except Exception:
                 pass
 

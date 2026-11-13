@@ -14,7 +14,8 @@ Browser-less Plotly static export: QuickJS + micro-DOM + vendored Plotly 2D -> S
 | ------------------------------- | ----------------------------------------------- |
 | `core.py`                       | Public API; figure -> JSON                      |
 | `engine.py`                     | QuickJS lifecycle; canvas -> PNG; typed arrays  |
-| `fonts.py`                      | Text metrics callable into JS                   |
+| `fonts.py`                      | Text metrics callable into JS; font fallbacks   |
+| `_fonts/`                       | Bundled DejaVu fallback fonts + license         |
 | `raster.py`                     | SVG -> raster (resvg)                           |
 | `plotly_hook.py`                | Monkeypatch Plotly                              |
 | `js/micro_dom.js`               | First-party DOM/SVG stubs (**edit here**)       |

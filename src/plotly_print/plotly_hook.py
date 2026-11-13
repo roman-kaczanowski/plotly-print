@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, BinaryIO
 
 import plotly_print.core as core
+from plotly_print.fonts import FontPaths
 
 _ORIGINAL_TO_IMAGE = None
 _ORIGINAL_WRITE_IMAGE = None
@@ -16,6 +17,8 @@ def _patched_to_image(
     height: int | None = None,
     scale: float | None = None,
     validate: bool = True,
+    font_files: FontPaths | None = None,
+    font_dirs: FontPaths | None = None,
     **kwargs: Any,
 ) -> bytes:
     return core.to_image(
@@ -24,6 +27,8 @@ def _patched_to_image(
         width=width,
         height=height,
         scale=scale or 1.0,
+        font_files=font_files,
+        font_dirs=font_dirs,
     )
 
 
@@ -35,6 +40,8 @@ def _patched_write_image(
     width: int | None = None,
     height: int | None = None,
     validate: bool = True,
+    font_files: FontPaths | None = None,
+    font_dirs: FontPaths | None = None,
     **kwargs: Any,
 ) -> None:
     core.write_image(
@@ -44,6 +51,8 @@ def _patched_write_image(
         scale=scale or 1.0,
         width=width,
         height=height,
+        font_files=font_files,
+        font_dirs=font_dirs,
     )
 
 
