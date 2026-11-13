@@ -1,3 +1,4 @@
+import logging
 import shutil
 from pathlib import Path
 
@@ -15,6 +16,10 @@ def _svg(family: str) -> str:
         '<rect width="300" height="60" fill="white"/>'
         f'<text x="10" y="40" font-size="30" font-family="{family}">Wgjy</text></svg>'
     )
+
+
+def _bundled(name: str) -> Path:
+    return Path(next(path for path in fonts.BUNDLED_FONTS if Path(path).name == name))
 
 
 def test_bundled_font_is_dejavu_sans():
@@ -96,6 +101,92 @@ def test_invalid_font_sources_raise(tmp_path):
     invalid.write_text('not a font')
     with pytest.raises(ValueError):
         fonts.resolve_font_files(invalid)
+
+
+def test_custom_font_faces_are_selected_by_weight():
+    regular = _bundled('DejaVuSans.ttf')
+    bold = _bundled('DejaVuSans-Bold.ttf')
+    manager = fonts.FontManager(font_files=[bold, regular])
+
+    assert Path(manager._select_custom_font('DejaVu Sans', 'normal')) == regular
+    assert Path(manager._select_custom_font('DejaVu Sans', 'bold')) == bold
+    assert Path(manager._select_custom_font('DejaVu Sans', '600')) == bold
+
+
+def test_get_font_respects_weight_for_custom_faces(tmp_path):
+    regular = tmp_path / 'Brandy-Regular.ttf'
+    bold = tmp_path / 'Brandy-Bold.ttf'
+    shutil.copy(_bundled('DejaVuSans.ttf'), regular)
+    shutil.copy(_bundled('DejaVuSans-Bold.ttf'), bold)
+    manager = fonts.FontManager(font_files=[bold, regular])
+
+    assert Path(manager.get_font('Brandy', 12, 'normal').path) == regular
+    assert Path(manager.get_font('Brandy', 12, 'bold').path) == bold
+    assert Path(manager.get_font('Brandy', 12, '700').path) == bold
+
+
+def test_font_weight_reads_os2_and_falls_back_to_style(monkeypatch):
+    regular = str(_bundled('DejaVuSans.ttf'))
+    bold = str(_bundled('DejaVuSans-Bold.ttf'))
+
+    assert fonts._read_font_weight(regular) == 400
+    assert fonts._read_font_weight(bold) == 700
+    assert fonts._style_weight('Light Italic') == 300
+    assert fonts._style_weight('Bold') == 700
+    assert fonts._style_weight('Regular') is None
+
+    monkeypatch.setattr(fonts, '_read_font_weight', lambda path: None)
+    assert fonts._font_face_weight(bold, 'Bold') == 700
+    assert fonts._font_face_weight(regular, 'Light') == 300
+
+    monkeypatch.setattr(fonts, '_read_font_weight', lambda path: 400)
+    assert fonts._font_face_weight(bold, 'Bold') == 700
+
+
+def test_font_cmap_detects_coverage():
+    cmap = fonts._font_cmap(str(_bundled('DejaVuSans.ttf')))
+    assert cmap is not None
+    assert cmap.covers(ord(' '))
+    assert cmap.covers(ord('A'))
+    assert not cmap.covers(0x4E2D)
+
+
+def test_measure_uses_fallback_for_missing_glyphs(monkeypatch, caplog, tmp_path):
+    primary = tmp_path / 'Subset-Regular.ttf'
+    shutil.copy(_bundled('DejaVuSans.ttf'), primary)
+    mono = _bundled('DejaVuSansMono.ttf')
+    real_cmap = fonts._font_cmap
+
+    def fake_cmap(path):
+        if Path(path).resolve() == primary.resolve():
+            return fonts._Cmap([(ord('A'), ord('Z')), (ord('a'), ord('z')), (ord('.'), ord('.'))])
+        return real_cmap(path)
+
+    monkeypatch.setattr(fonts, '_font_cmap', fake_cmap)
+    monkeypatch.setattr(fonts, '_system_font_files', lambda: ())
+    monkeypatch.setattr(fonts, 'CANDIDATE_FONTS', [])
+    monkeypatch.setattr(fonts, 'BUNDLED_FONTS', [str(mono)])
+    fonts._WARNED_MISSING_FONTS.clear()
+
+    manager = fonts.FontManager(font_files=[primary])
+    text = 'AB CD'
+    with caplog.at_level(logging.WARNING, logger='plotly_print.fonts'):
+        measured = manager.measure(text, 'Subset', 20)
+        manager.measure('EF GH', 'Subset', 20)
+
+    fallback_font = ImageFont.truetype(str(mono), 20)
+    bbox = fallback_font.getbbox(text)
+    expected_width = round(max(float(fallback_font.getlength(text)), float(bbox[2] - bbox[0])), 2)
+    assert measured[0] == expected_width
+
+    primary_font = ImageFont.truetype(str(primary), 20)
+    assert round(float(primary_font.getlength(text)), 2) != expected_width
+
+    records = [record for record in caplog.records if record.name == 'plotly_print.fonts']
+    assert len(records) == 1
+    message = records[0].getMessage()
+    assert 'U+0020' in message
+    assert 'DejaVuSansMono' in message
 
 
 def test_export_accepts_custom_font_sources(tmp_path):
